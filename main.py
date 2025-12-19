@@ -2,19 +2,33 @@ from src.data_loader import get_train_test_data
 from src.analysis import RegressionAnalysis
 from src.visualization import (
     plot_residuals, plot_influence, plot_partial_regression, 
-    plot_actual_vs_predicted, plot_unified_scissor_effect
+    plot_actual_vs_predicted, plot_nostalgia_distribution,
+    plot_scale_location, plot_coefficients_with_ci, plot_error_by_era
 )
 from src.eda import run_eda
 from src.config import TARGET_COL, BREAK_YEAR
+import pandas as pd
+import numpy as np
 
 def main():
-    print("--- Musical Carbon Dating: Full Analysis Pipeline ---")
+    print("="*80)
+    print("Musical Carbon Dating: Two-Stage Analysis")
+    print("Stage 1: Year Prediction (Regression Modeling)")
+    print("Stage 2: Nostalgia Index (Model Application)")
+    print("="*80)
     
-    # 1. Load and Preprocess Data
-    train_df, test_df = get_train_test_data()
+    # ========== STAGE 1: YEAR PREDICTION ==========
     
-    # 2. Exploratory Data Analysis
-    print("\nRunning Exploratory Data Analysis...")
+    # === Part 1: Data Preparation ===
+    print("\n" + "="*80)
+    print("PART 1: DATA PREPARATION")
+    print("="*80)
+    train_df, test_df = get_train_test_data()  # Default: random split
+    
+    # === Part 2: Exploratory Data Analysis ===
+    print("\n" + "="*80)
+    print("PART 2: EXPLORATORY DATA ANALYSIS")
+    print("="*80)
     run_eda(train_df)
     
     X_train = train_df.drop(columns=[TARGET_COL])
@@ -22,54 +36,159 @@ def main():
     X_test = test_df.drop(columns=[TARGET_COL])
     y_test = test_df[TARGET_COL]
     
-    # 3. Initialize Analysis Engine
+    # Initialize Analysis Engine
     analyzer = RegressionAnalysis(X_train, y_train, X_test, y_test)
     
-    # 4. Fitting Models
-    analyzer.fit_slr(feature='loudness')
+    # === Phase I: Simple Linear Regression ===
+    print("\n" + "="*80)
+    print("PHASE I: SIMPLE LINEAR REGRESSION")
+    print("="*80)
+    slr_model = analyzer.fit_slr(feature='loudness')
+    
+    # === Phase II: Multiple Linear Regression (Baseline) ===
+    print("\n" + "="*80)
+    print("PHASE II: MULTIPLE LINEAR REGRESSION (Baseline)")
+    print("="*80)
     mlr_model = analyzer.fit_mlr()
     
-    # Robustness Checks
-    analyzer.print_correlation_loudness_energy()
-    analyzer.fit_mlr_no_popularity()
+    # Generate baseline MLR prediction plot (for comparison with WLS)
+    mlr_features = [c for c in X_train.columns if c != 'year']
+    import statsmodels.api as sm
+    X_test_mlr = sm.add_constant(X_test[mlr_features], has_constant='add')
+    mlr_pred = mlr_model.predict(X_test_mlr)
+    plot_actual_vs_predicted(y_test, mlr_pred, title="Baseline MLR Predictions")
     
-    # 5. Diagnostics & Visuals
-    print("\nRunning Model Diagnostics...")
-    analyzer.check_multicollinearity()
+    # Partial Regression Plots (Added Variable Plots)
+    plot_partial_regression(mlr_model, exog_idx=0, title="MLR Partial Regression")
+    
+    # === Phase III: Regression Diagnostics ===
+    print("\n" + "="*80)
+    print("PHASE III: REGRESSION DIAGNOSTICS")
+    print("="*80)
+    
+    # 3A. Heteroscedasticity
+    print("\n>>> 3A. Heteroscedasticity Diagnosis & Remedy")
     analyzer.check_heteroscedasticity(mlr_model)
+    wls_model, wls_weights = analyzer.fit_wls(mlr_model)
     
+    # Visual Verification of WLS Fit
+    from src.visualization import plot_weighted_fit
+    plot_weighted_fit(
+        y_train, 
+        wls_model.fittedvalues, 
+        wls_weights, 
+        title="WLS Weighted Fit (Training)"
+    )
+    
+    # 3B. Non-normality
+    print("\n>>> 3B. Normality Check & Box-Cox Transformation")
     plot_residuals(mlr_model, title="MLR Residuals")
+    plot_scale_location(mlr_model, title="MLR Scale-Location")
+    y_transformed, lambda_best = analyzer.run_box_cox()
+    # Note: For full implementation, would refit model on transformed y
+    # Skipping for now to keep pipeline coherent
+    
+    # 3C. Outliers & Influence
+    print("\n>>> 3C. Outliers & Influential Points")
     plot_influence(mlr_model, title="MLR Influence")
-    plot_partial_regression(mlr_model, exog_idx='acousticness', title="Partial Regression - Acousticness")
     
-    # 6. Assumption Remedies & Poly Checks
-    analyzer.check_nonlinearity(mlr_model, feature='duration_ms')
-    analyzer.run_ridge_regression(alpha=1.0)
+    # === Phase IV: Multicollinearity ===
+    print("\n" + "="*80)
+    print("PHASE IV: MULTICOLLINEARITY DIAGNOSIS & REMEDY")
+    print("="*80)
     
-    # 7. Model Selection
-    print("\n--- Model Selection Comparison ---")
-    lasso_feats = analyzer.model_selection_lasso(alpha=0.01)
-    stepwise_feats = analyzer.stepwise_selection()
+    vif_data = analyzer.check_multicollinearity()
+    analyzer.print_correlation_loudness_energy()
     
-    # 8. Structural Break (Digital Revolution)
-    print(f"\nModeling Structural Break at {BREAK_YEAR}...")
-    final_break_model = analyzer.chow_test(break_year=BREAK_YEAR)
+    # Test robustness without popularity
+    mlr_nopop = analyzer.fit_mlr_no_popularity()
     
-    # 9. Final Validation on Test Set
-    print("\nEvaluating Baseline MLR Model (Blind Prediction)...")
-    y_pred_mlr = analyzer.evaluate_model(mlr_model, features_used=list(X_train.columns))
-    plot_actual_vs_predicted(y_test, y_pred_mlr, title="Baseline MLR Predictions")
+    # Ridge Regression
+    ridge_model = analyzer.run_ridge_regression(alpha=1.0)
+    
+    # === Phase V: Model Selection ===
+    print("\n" + "="*80)
+    print("PHASE V: MODEL SELECTION")
+    print("="*80)
+    
+    # Stepwise Selection (AIC-based)
+    stepwise_features = analyzer.stepwise_selection()
+    
+    # LASSO Selection
+    lasso_features = analyzer.model_selection_lasso(alpha=0.01)
+    
+    print(f"\nFeature Comparison:")
+    print(f"Stepwise (AIC) selected: {len(stepwise_features)} features")
+    print(f"LASSO selected: {len(lasso_features)} features")
+    
+    # === Phase VI: Model Comparison & Best Model Selection ===
+    print("\n" + "="*80)
+    print("PHASE VI: MODEL COMPARISON & FINAL EVALUATION")
+    print("="*80)
+    
+    # Compare all candidate models
+    models_dict = {
+        'MLR_Full': mlr_model,
+        'MLR_NoPop': mlr_nopop,
+        'WLS': wls_model
+    }
+    
+    comparison_df = analyzer.compare_models(models_dict, test_set=True)
+    
+    # Select best model based on AIC
+    best_model_name = comparison_df.sort_values('AIC').iloc[0]['Model']
+    best_model = models_dict[best_model_name]
+    
+    print(f"\n✓ Best Model Selected: {best_model_name}")
+    plot_coefficients_with_ci(best_model, title=f"{best_model_name} Coefficients (95% CI)")
+    
+    # Final Evaluation on Test Set
+    y_pred = analyzer.evaluate_model(best_model)
+    plot_actual_vs_predicted(y_test, y_pred, title=f"Best Model ({best_model_name}) Predictions")
+    
+    # ========== STAGE 2: NOSTALGIA INDEX ==========
+    
+    print("\n" + "="*80)
+    print("STAGE 2: NOSTALGIA INDEX APPLICATION")
+    print("="*80)
+    
+    # Calculate Nostalgia Index (Residual-based approach)
+    nostalgia_index = np.abs(y_pred - y_test)
+    
+    print(f"\nNostalgia Index Statistics:")
+    print(f"  Mean: {nostalgia_index.mean():.2f} years")
+    print(f"  Median: {nostalgia_index.median():.2f} years")
+    print(f"  Std: {nostalgia_index.std():.2f} years")
+    print(f"  Max: {nostalgia_index.max():.2f} years")
 
-    print(f"\nEvaluating Structural Break Model at {BREAK_YEAR} (Explanatory)...")
-    y_pred_break = analyzer.evaluate_model(final_break_model, features_used=stepwise_feats + ['break_dummy'])
+    plot_nostalgia_distribution(nostalgia_index)
+    plot_error_by_era(y_test, y_pred)
     
-    # Generate Final Fit Plot
-    plot_actual_vs_predicted(y_test, y_pred_break, title="Final Break Model Predictions")
+    # Identify highly nostalgic songs (top 5%)
+    threshold_95 = nostalgia_index.quantile(0.95)
+    highly_nostalgic = nostalgia_index[nostalgia_index >= threshold_95]
     
-    # Generate Unified Scissor Plot
-    plot_unified_scissor_effect(train_df, BREAK_YEAR, title="Unified Scissor Plot")
+    print(f"\nHighly Nostalgic Songs (Top 5%, Index ≥ {threshold_95:.1f} years):")
+    print(f"  Count: {len(highly_nostalgic)}")
     
-    print("\nPipeline execution complete. Results saved to output/ folder.")
+    # Save results
+    test_df_with_predictions = test_df.copy()
+    test_df_with_predictions['predicted_year'] = y_pred
+    test_df_with_predictions['nostalgia_index'] = nostalgia_index
+    
+    output_path = 'output/tables/predictions_with_nostalgia_index.csv'
+    test_df_with_predictions.to_csv(output_path, index=False)
+    print(f"\n✓ Results saved to {output_path}")
+    
+    print("\n" + "="*80)
+    print("PIPELINE COMPLETE!")
+    print("="*80)
+    print("\nSummary:")
+    print(f"  - Best Model: {best_model_name}")
+    print(f"  - Test RMSE: {np.sqrt(((y_pred - y_test)**2).mean()):.2f} years")
+    print(f"  - Mean Nostalgia Index: {nostalgia_index.mean():.2f} years")
+    print(f"  - All figures saved to output/figures/")
+    print(f"  - Predictions saved to {output_path}")
 
 if __name__ == "__main__":
     main()

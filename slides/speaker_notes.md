@@ -1,155 +1,182 @@
 # Speaker Notes: Musical Carbon Dating (Group Presentation - 5 Speakers)
-**Target Time**: 25 Minutes (approx. 5 mins per speaker)
+**Target Time**: 22 Minutes (approx. 4-5 mins per speaker)
 **Format**: Verbatim Script (Read-aloud friendly)
 
 ---
 
-## Speaker 1: Context & Data (0:00 - 5:00)
-**Role**: Sets the stage, defines the problem, and introduces the dataset.
+## Speaker 1: Context & Data (0:00 - 4:00)
+**Role**: Sets the stage, defines the problem as "Feature Recognition," and introduces the dataset.
 
 **(0:00) Slide 1: Title Slide**
 "Good morning everyone. **We** are excited to present our group project: **'Musical Carbon Dating'**.
 
-In archaeology, scientists use carbon-14 isotopes to determine the history of organic matter. **We** set out to answer a similar question for culture: Can **we** take a raw audio file—without knowing its artist or release date—and predict exactly when it was produced based solely on its acoustic properties?
+In archaeology, scientists use Carbon-14 to date organic matter. **We** asked a similar question for culture: Can **we** take a raw audio file—without knowing its artist or release date—and predict exactly when it was produced based solely on its acoustic properties?
 
-Today, **we** will walk you through how **we** built a statistical model to capture the 'Arrow of Time' in music."
+Today, **we** will show you how **we** built a statistical model to recognize the 'acoustic signature' of every era from 1960 to 2020."
 
 **(1:00) Slide 2: Table of Contents**
 "Here is our roadmap.
 I will start by defining the research problem and our dataset.
-Then, **Speaker 2** will build our foundation using Linear Regression.
-**Speaker 3** will present our rigorous Diagnostic Audit and the issues we found.
-**Speaker 4** will reveal the core discovery of our project: the Structural Break of 1999.
-Finally, **Speaker 5** will cover Model Selection and our commercial Applications."
+Then, **Speaker 2** will walk us through our Regression Pipeline, from simple models to complex ones.
+**Speaker 3** will present our rigorous Diagnostic Audit—where we found and fixed critical statistical violations.
+**Speaker 4** will explain our final solution: Weighted Least Squares and Model Selection.
+Finally, **Speaker 5** will demonstrate our commercial application: The Nostalgia Index."
 
 **(1:30) Slide 3: The Research Question**
-"Our core question is: 'Does music evolve linearly, or are there distinct eras defined by technology?'
-We know a Beatles track sounds different from a Dua Lipa track. But can **we** quantify this?
+"Our core objective is **Feature Recognition**.
+Unlike stock prices which depend on history, a song's features are intrinsic. A 1970s rock song has a specific 'sound'—dry drums, warm bass—that is distinct from a 2010s pop song with digital sub-bass and auto-tune.
 
-This matters for two reasons.
-First, commercially, platforms like Spotify need to understand 'vintage' aesthetics to improve recommendations.
-Second, culturally, **we** want to measure the impact of the Digital Revolution. Did the invention of ProTools and MP3s actually change the mathematical structure of music? As **we'll** see, the answer is yes."
+Our goal is to quantify these differences.
+Why does this matter?
+1.  **Archival**: Imagine discovering a lost tape in an attic. Our model could date it instantly.
+2.  **Commercial**: Recommendation algorithms need to understand 'Vibe'. A user listening to 80s music might also like a modern song if it *sounds* like the 80s."
 
-**(3:30) Slide 4: The Dataset**
-"To answer this, **we** analyzed the Spotify 600k Tracks Dataset.
-**We** applied strict filtering criteria:
-- **We** selected tracks from 1960 to 2020.
-- **We** filtered for 'Popularity > 30' to ensure **we** are analyzing culturally relevant trends.
-- This left **us** with a massive sample size of **N = 250,971 tracks**.
+**(3:00) Slide 4: The Dataset**
+"To build this, **we** analyzed the Spotify 600k Tracks Dataset.
+We applied strict quality control:
+- **Timeframe**: 1960 to 2020.
+- **Filter**: Popularity > 30. We focus on culturally relevant music to capture the 'sound of the times'.
+- **Sample Size**: This left us with **N = 250,971 tracks**.
 
-Our feature set covers Physical properties (Loudness), Perceptual qualities (Acousticness), and Musical attributes (Key).
-A key observation to keep in mind is the strong correlation ($r \approx 0.7$) between Loudness and Energy, hinting at the 'Loudness War' **we'll** discuss next.
-Now, I'll hand it over to **Speaker 2** to discuss our initial models."
+Our features ($p=13$) cover the full spectrum:
+- **Physical**: Loudness, Tempo, Duration.
+- **Musical**: Key, Mode, Time Signature.
+- **Perceptual**: Acousticness, Energy, Valence.
+
+Now, I'll hand it over to **Speaker 2** to start our modeling journey."
 
 ---
 
-## Speaker 2: Linear Foundations (5:00 - 10:00)
-**Role**: Explains the baseline models (SLR & MLR) and initial findings.
+## Speaker 2: Initial Models (4:00 - 8:00)
+**Role**: Explains the baseline models (SLR & MLR) and the initial results.
 
-**(5:00) Slide 5: Phase II - Simple Linear Regression**
+**(4:00) Slide 5: Methodology Overview**
 "Thanks, Speaker 1.
-**We** began our analysis with the simplest possible model: Phase II.
-**We** regressed 'Year' on a single variable: **Loudness**.
+Our methodology treats this as a regression problem. We used a **Random Split (80/20)** strategy.
+Why random split? Because we are testing the model's ability to 'recognize' the era of any given song, much like an art historian identifying a painting's period by its style. We want our test set to cover all decades equally."
 
-The results were statistically highly significant. With a t-statistic of **183.7**, **we** can say with near certainty that music has gotten louder over time.
-However, look at the $R^2$. It's only **0.144**.
-This tells **us** that while the 'Loudness War' is real—adding about 1.2 years for every decibel—it's not the only driver of evolution."
+**(5:00) Slide 6: Phase I - The 'Loudness War'**
+"We started simple: Phase I.
+We regressed 'Year' on a single variable: **Loudness**.
+The results confirmed a famous phenomenon known as the 'Loudness War'.
+- Coefficient: **1.2**. This means for every decibel louder a song is, it sounds about 1.2 years 'newer'.
+- Significance: Extremely high ($t=183.7$).
 
-**(7:30) Slide 6: Phase III - Multiple Linear Regression**
-"So, **we** moved to Phase III: The Full Multiple Linear Regression Model.
-**We** used a matrix formulation $\mathbf{y} = \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\varepsilon}$ incorporating all 13 features.
+However, the $R^2$ is only **0.144**. Loudness tells us *something*—music got louder—but it's a blunt instrument."
 
-This doubled our explanatory power to an $R^2$ of **0.296**, with an error (RMSE) of about **12.2 years**.
-**We** started seeing nuanced trends:
-- **Acousticness** had a strong negative coefficient (-2.8), reflecting the decline of folk instruments.
-- **Danceability** had a massive positive coefficient (+22), showing the rise of rhythmic genres like Disco and Hip-hop.
+**(6:30) Slide 7: Phase II - Multiple Linear Regression**
+"So, we moved to Phase II: The Full Model.
+We included all 13 features.
+$$ \mathbf{y} = \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\varepsilon} $$
 
-But an $R^2$ of 0.3 is still quite low. **We** suspected **we** were missing something fundamental.
-To investigate why, **Speaker 3** will walk us through the Diagnostics."
+This baseline model achieved an $R^2$ of **0.296**.
+Our error (RMSE) dropped to about **12 years**.
+We started seeing nuanced trends:
+- **Acousticness**: Strong negative trend. As time goes on, acoustic instruments are replaced by synthesizers.
+- **Danceability**: Positive trend. Music has become more rhythmic.
+
+But an $R^2$ of 0.3 means 70% of the variance is still unexplained. More importantly, we suspected our model was technically invalid.
+To investigate, **Speaker 3** will perform the Audit."
 
 ---
 
-## Speaker 3: The Diagnostic Audit (10:00 - 15:00)
-**Role**: The "Auditor". Discusses assumptions, violations, and physical interpretations.
+## Speaker 3: The Audit (8:00 - 12:30)
+**Role**: The "Auditor". Discusses diagnostics, heteroscedasticity, and physical interpretations of residuals.
 
-**(10:00) Slide 7: Diagnostics Overview**
+**(8:00) Slide 8: Diagnostic Audit**
 "Thanks, Speaker 2.
-Before adding complexity, I performed a rigorous **Diagnostic Audit** of the Gauss-Markov assumptions.
+Before trying to improve accuracy, we must check validity. I ran a rigorous **Diagnostic Audit** of the Gauss-Markov assumptions.
 This is where the project gets interesting statistically.
 
-1.  **Linearity**: **We** ran a Partial F-Test adding a quadratic term for Duration. The F-statistic was **304.7**. **We** strongly rejected the null; music evolution isn't linear.
-2.  **Multicollinearity**: Good news here. All VIF scores were under 4.0. Our features are distinct.
-3.  **Homoscedasticity**: This was the big red flag. The Breusch-Pagan test yielded a massive statistic of **19,391**. **We** found severe heteroscedasticity."
+1.  **Linearity**: We ran a Partial F-Test ($F \approx 305$). We soundly rejected linearity. Music evolution is complex and non-linear.
+2.  **Multicollinearity**: Good news. All VIF scores were under 4.0, even with the Loudness/Energy correlation. Our features are distinct.
+3.  **Homoscedasticity**: This was the critical failure. The Breusch-Pagan test statistic was **over 22,000**. The variance is NOT constant."
 
-**(12:00) Slide 8: Residual Analysis**
-"Let's look at this 'Residuals vs Fitted' plot. Do you see the sharp diagonal edges?
-This isn't random noise. It's a **Boundedness Artifact**. Because our data only goes from 1960 to 2020, the residuals are mathematically boxed in. For example, if we predict a song is from 2010, the maximum possible positive error is 10 years, because time stops at 2020. 
-
-Furthermore, our Q-Q plot shows heavy tails. This confirms that music evolution isn't a Gaussian process. Instead of a model failure, we interpret this as **Stylistic Heterogeneity**. Those 'fat tails' represent tracks that sound way older or newer than their release date—the very basis for our **Nostalgia Index**.
-
-> [!TIP]
-> **Defense Strategy (If asked about OLS validity):**
-> 1. **Boundedness**: OLS is robust as an approximation. Tobit or Beta regression could handle bounds, but OLS provides maximum interpretability for this project.
-> 2. **Non-normality**: With $N=250,000$, the **Central Limit Theorem** ensures our coefficient estimates $\hat{\beta}$ are asymptotically normal, making our t-tests and p-values perfectly valid despite non-normal errors."
-
-Now, this structural change in variance hinted at a deeper issue... which **Speaker 4** will now reveal."
+**(10:00) Slide 9: Residual Analysis**
+"Let's look at the plots.
+The Residuals vs Fitted plot shows sharp diagonal boundaries—an artifact of our time-bounded data (1960-2020).
+The Q-Q plot shows heavy tails. This confirms 'Stylistic Heterogeneity'—some songs are naturally retro or futuristic outliers.
+This variance instability kills standard OLS. We need a fix."
 
 ---
 
-## Speaker 4: The Structural Break (15:00 - 20:00)
-**Role**: The "Historian". Explains the main breakthrough (1999 split) and Interaction effects.
+## Speaker 4: The Solution (12:30 - 17:00)
+**Role**: Explains Model Selection and WLS.
 
-**(15:00) Slide 9: Phase VI - The Digital Revolution**
+**(12:30) Slide 10: Phase IV - Model Selection**
 "Thanks, Speaker 3.
-Based on those diagnostics, **we** hypothesized that music history isn't continuous. It was broken by the **Digital Revolution**.
-Technologically, 1999 is the year Napster and ProTools changed the industry.
+Before fixing validity, we fixed structure. We ran **Model Selection** to ensure parsimony.
+We compared **Stepwise AIC** vs **LASSO**.
+- Stepwise suggested dropping 'Key'.
+- **LASSO** ($L_1$ regularization) kept **all 13 features**.
 
-**We** modeled this as a **Structural Break** using interaction terms—effectively allowing every feature to have a different 'slope' before and after 1999.
+We chose to stick with the full LASSO set.
+Why? Because subtle features like 'Key' and 'Mode' matter. The shift from complex modulations in 70s Jazz Fusion to the loops of modern Pop is real. Our model needs every acoustic signal it can get."
 
-The result was stunning.
-Our $R^2$ jumped from 0.30 to **0.734**.
-Our error dropped from 12 years to **7.37 years**.
-**We** confirmed that 1999 was a singularity where the 'physics' of music creation changed."
+**(14:00) Slide 11: Phase V - Weighted Least Squares (WLS)**
+"Now for the heteroscedasticity fix.
+We implemented **Weighted Least Squares**.
+We weighted every observation inversely to its variance.
 
-**(17:30) Slide 10: The Scissor Effect**
-"The most dramatic evidence is what **we** call the **'Scissor Effect'**.
-Look at the plot for **Acousticness**.
+**But here's the key insight**: WLS doesn't make our *predictions* more accurate. It makes our *inference* valid.
+- The **Weighted R² = 0.77** tells us we're capturing 77% of the *reliable trends* in music evolution.
+- But the test set still contains 'wild' songs—retro throwbacks, experimental outliers—that no model can perfectly predict.
 
-Before 1999 (blue line), the slope is steep and negative. Technology forced people to abandon acoustic instruments.
-But after 1999 (orange line), the slope flips and becomes positive!
+What WLS *does* fix:
+- Our **p-values** are now trustworthy.
+- Our **confidence intervals** are correct.
+- When we say 'Danceability has coefficient +24', that number is now statistically defensible."
 
-Why? **We** believe that in the digital era, being 'acoustic' became a stylistic *choice* (like Ed Sheeran) rather than a limitation. The relationship inverted.
-Now, **Speaker 5** will show how **we** selected our final model and applied it."
+**(16:00) Slide 12: Phase VI-A - Technological Drivers**
+"Our regression also revealed the 'Physics' of modern production.
+Two massive insights here:
+1.  **The Loudness-Energy Paradox**:
+    - We know music is getting louder.
+    - BUT, our model shows that for the *same loudness*, modern songs have **lower Energy** ($\beta \approx -5.4$).
+    - This is the signature of the **Loudness War**: Dynamic range is crushed by compression. It's 'loud', but not energetic.
+
+2.  **The Attention Economy**:
+    - Duration is dropping statistically. The streaming era is literally shortening our attention spans."
+
+**(17:00) Slide 13: Phase VI-B - Cultural Evolution**
+"And finally, the 'Psychology' of the era.
+1.  **The 'Sad Banger'**:
+    - Danceability is WAY up (+24).
+    - Valence (Optimism) is WAY down (-16).
+    - We are dancing more, but feeling less.
+
+2.  **The Acousticness Paradox**:
+    - Everyone thinks acoustic music died.
+    - Wrong. If you control for Loudness, acousticness is actually **positive** (+2.08) in our model.
+    - That means once you strip away the compression, modern Indie and Lo-Fi are keeping the acoustic spirit alive. Simple correlation missed this; WLS found it."
 
 ---
 
-## Speaker 5: Selection & Applications (20:00 - 25:00)
-**Role**: Summarizes model selection, presents the "Nostalgia Index", and concludes.
+## Speaker 5: Applications & Conclusion (18:00 - 22:00)
+**Role**: Post-Model Analysis. Nostalgia Index. Note: Slide numbers shifted due to deep dive.
 
-**(20:00) Slide 11: Phase V - Model Selection**
+**(18:00) Slide 14: The Nostalgia Index**
 "Thanks, Speaker 4.
-With such a complex model, **we** needed to ensure **we** weren't overfitting.
-**We** compared LASSO ($L_1$) and Stepwise (AIC) selection.
+So we have a model that works. But what about when it 'fails'?
+If our model predicts a 2020 song was made in 1980, is the model wrong? Or is the *song* Retro?
 
-**We** chose LASSO. It kept critical features like 'Speechiness' (for the Rap era) and 'Instrumentalness' (for the decline of solos), while zeroing out noise. This gave **us** the most robust model."
+We define the **Nostalgia Index** as: $| \text{Predicted Year} - \text{Actual Year} |$.
+A high index means a song is 'Time-Displaced'."
 
-**(21:30) Slide 12: The Nostalgia Index**
-"Finally, **we** applied this model commercially.
-If our model predicts the 'production year', what does it mean when it gets it wrong?
-**We** define the **Nostalgia Index** as 'Predicted Year minus Actual Year'.
+**(18:30) Slide 15: Validation**
+"We validated this on verified tracks.
+**Dua Lipa's 'Physical'** (2020) sounds like 1980s aerobics music.
+Our model predicted **2009**. It sensed the 'old' features, giving it a high Nostalgia Index of **11 years**.
+**The Weeknd's 'Blinding Lights'** has an even higher index (14.8 years) due to its 80s synth-pop style.
 
-**We** tested this on verified 'Retro' hits:
-1.  **The Weeknd (2012)**: Predicted **1995**. **We** correctly heard the 90s R&B influence.
-2.  **Bruno Mars (2017)**: Predicted **2000**, catching the Funk vibe.
-3.  **Dua Lipa (2020)**: Predicted **2008**, picking up 80s Synthwave.
-This proves our model captures **Genre DNA**."
+This proves the model can distinguish 'release date' from 'aesthetic date'."
 
-**(23:30) Slide 13 & 14: Conclusion**
-"Looking at our final accuracy plot, you can see how tight the fit becomes after 1999.
+**(20:30) Slide 16: Conclusion**
+"To wrap up:
 
-To conclude:
-1.  **We succeeded**: **We** can date a song to within $\pm 7$ years.
-2.  **We discovered**: The 1999 Structural Break is the dominant event in music history.
-3.  **We applied**: The Nostalgia Index is a viable metric for recommendation algorithms.
+1.  **Feasibility**: We can date music to within **±9 years** purely from acoustics.
+2.  **Rigor**: OLS was invalid (heteroscedasticity). WLS gave us **trustworthy p-values and coefficients**.
+3.  **Transparency**: The Weighted R² of 0.77 measures *trend capture*, not prediction. Our practical accuracy is **MAE = 9 years**.
+4.  **Application**: The Nostalgia Index turns residuals into a commercial metric.
 
-Thank you for your time. **We** are happy to take any questions."
+Thank you. We are happy to take questions."

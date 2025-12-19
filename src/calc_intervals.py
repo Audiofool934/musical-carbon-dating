@@ -8,15 +8,18 @@ import os
 # Fix path
 sys.path.append(os.getcwd())
 try:
-    from src.config import DATA_DIR, FEATURE_COLS
+    from src.config import DATA_DIR, FEATURE_COLS, MIN_POPULARITY, START_YEAR, END_YEAR
 except ImportError:
     # Fallback if config import fails typically
     DATA_DIR = '../data'
     FEATURE_COLS = [
-        'acousticness', 'danceability', 'duration_ms', 'energy', 
-        'instrumentalness', 'key', 'liveness', 'loudness', 
-        'mode', 'speechiness', 'tempo', 'valence', 'popularity'
+        'loudness', 'tempo', 'duration_ms',
+        'key', 'mode', 'time_signature',
+        'acousticness', 'danceability', 'energy', 'instrumentalness', 'liveness', 'speechiness', 'valence'
     ]
+    MIN_POPULARITY = 30
+    START_YEAR = 1960
+    END_YEAR = 2020
 
 def calc_nostalgia_intervals():
     """
@@ -35,7 +38,11 @@ def calc_nostalgia_intervals():
     df['year'] = df['year'].astype(int)
     
     # Filter for modeling (Consistent with main analysis)
-    df_train = df[(df['popularity'] > 30) & (df['year'] >= 1960) & (df['year'] <= 2020)]
+    df_train = df[
+        (df['popularity'] > MIN_POPULARITY) &
+        (df['year'] >= START_YEAR) &
+        (df['year'] <= END_YEAR)
+    ]
     
     # 2. Fit Model (Blind Prediction - No Interaction)
     X = df_train[FEATURE_COLS]
@@ -56,13 +63,10 @@ def calc_nostalgia_intervals():
     print(f"{'Artist - Track':<40} | {'Actual':<6} | {'Pred':<6} | {'Lower':<6} | {'Upper':<6} | {'Anomaly?'}")
     print("-" * 90)
     
-    print(f"{'Artist - Track':<40} | {'Actual':<6} | {'Pred':<6} | {'Lower':<6} | {'Upper':<6} | {'Anomaly?'}")
-    print("-" * 90)
-    
     for cand in candidates:
         # Fuzzy match
-        mask = df['name'].str.contains(cand['track'], case=False) & \
-               df['artists'].str.contains(cand['artist'], case=False)
+        mask = df['name'].str.contains(cand['track'], case=False, na=False) & \
+               df['artists'].str.contains(cand['artist'], case=False, na=False)
         
         matches = df[mask]
         

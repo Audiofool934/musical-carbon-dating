@@ -24,7 +24,7 @@ TEST_SIZE = 0.2
 # Variable Lists
 TARGET_COL = 'year'
 FEATURE_COLS = [
-    'acousticness', 'danceability', 'duration_ms', 'energy', 
-    'instrumentalness', 'key', 'liveness', 'loudness', 
-    'mode', 'speechiness', 'tempo', 'valence', 'popularity'
+    'loudness', 'tempo', 'duration_ms',
+    'key', 'mode', 'time_signature',
+    'acousticness', 'danceability', 'energy', 'instrumentalness', 'liveness', 'speechiness', 'valence'
 ]

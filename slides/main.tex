@@ -13,11 +13,12 @@
 \usepackage{hyperref}
 \usepackage{ragged2e}
 \usepackage{xcolor}
+\usepackage{colortbl}
 
 % --- Metadata ---
 \title[Musical Carbon Dating]{Musical Carbon Dating}
-\subtitle{A Regression Analysis of Music Evolution (1960--2020)}
-\author[Audiofool]{Audiofool}
+\subtitle{A Statistical Feature Recognition Approach (1960-2020)}
+\author[Group Project]{Group Presentation}
 \institute[Data Science]{University Statistical Analysis Project}
 \date{\today}
 
@@ -25,9 +26,6 @@
 \setbeamertemplate{navigation symbols}{}
 \setbeamerfont{caption}{size=\footnotesize}
 \graphicspath{{../output/figures/}}
-
-% --- Custom Commands ---
-\newcommand{\hl}[1]{\textbf{\textcolor{blue}{#1}}}
 
 \begin{document}
 
@@ -45,271 +43,327 @@
 % -----------------------------------------------------------------------------
 % Section 1: Introduction
 % -----------------------------------------------------------------------------
-\section{Introduction}
+\section{Overview \& Data}
 
 \begin{frame}{The Research Question}
-    \begin{block}{The Arrow of Time}
+    \begin{block}{Feature Recognition}
         \centering
-        \textit{"Can we define the 'Arrow of Time' for music using only audio signal properties?"}
+        \textit{"Can we determine the vintage of a musical recording purely from its acoustic properties?"}
     \end{block}
     
     \vspace{0.5cm}
     \textbf{Objective}: 
-    To quantify the evolution of musical production styles from 1960 to 2020 using Regression Analysis.
+    To build a regression model that maps audio features to release year, quantifying the "Arrow of Time" in music production.
     
     \vspace{0.3cm}
-    \textbf{Why it matters}:
+    \textbf{Hypothesis}:
+    Musical eras have distinct, quantifiable acoustic fingerprints (e.g., the "dryness" of 70s rock vs. the "compression" of 2000s pop).
+\end{frame}
+
+\begin{frame}{The Data: Spotify 600k Tracks}
+    \textbf{Data Filtering Strategy}:
     \begin{itemize}
-        \item \textbf{Commercial}: Recommendation systems (Spotify) need to understand "vintage" vs "modern" aesthetics beyond just metadata.
-        \item \textbf{Cultural}: Quantifying the impact of the Digital Revolution (1999).
-    \end{itemize}
-\end{frame}
-
-\begin{frame}{The Dataset}
-    \begin{columns}
-        \column{0.5\textwidth}
-        \textbf{Source}: Spotify 600k Tracks Dataset.
-        
-        \vspace{0.3cm}
-        \textbf{Filtering Criteria}:
-        \begin{itemize}
-            \item Year: $1960 \le T \le 2020$.
-            \item Popularity $> 30$ (Focus on culturally relevant tracks).
-            \item Cleaned $N = \mathbf{250,971}$.
-        \end{itemize}
-        
-        \vspace{0.2cm}
-        \tiny \textbf{Source}: \href{https://www.kaggle.com/datasets/yamaerenay/spotify-dataset-19212020-600k-tracks}{Yamac Eren Ay (Kaggle, 2021)}
-        
-        \vspace{0.3cm}
-        \textbf{Features ($p=13$)}:
-        \begin{itemize}
-            \item \textbf{Physical}: \texttt{loudness}, \texttt{tempo}, \texttt{duration}.
-            \item \textbf{Perceptual}: \texttt{acousticness}, \texttt{energy}, \texttt{valence}.
-            \item \textbf{Musical}: \texttt{key}, \texttt{mode}.
-        \end{itemize}
-
-        \column{0.5\textwidth}
-        \begin{figure}
-            \includegraphics[width=0.9\linewidth]{figures/eda_correlation_heatmap.png}
-            \caption{Feature Correlation Matrix (Note $r_{loud, energy} \approx 0.7$)}
-        \end{figure}
-    \end{columns}
-\end{frame}
-
-% -----------------------------------------------------------------------------
-% Section 2: Methodology (Foundations)
-% -----------------------------------------------------------------------------
-\section{Methodology: Linear Foundations}
-
-\begin{frame}{Phase II: Simple Linear Regression (The "Loudness War")}
-    We started with a single predictor: \textbf{Loudness}.
-    $$ y_i = \beta_0 + \beta_{loud} x_{i,loud} + \varepsilon_i $$
-    
-    \begin{alertblock}{Result}
-        \begin{itemize}
-            \item $R^2 = 0.144$.
-            \item $t$-statistic $= 183.7$ ($p < 0.001$).
-            \item \textbf{Interpretation}: Music has gotten significantly louder over time (+1.2 years per dB).
-        \end{itemize}
-    \end{alertblock}
-\end{frame}
-
-\begin{frame}{Phase III: Multiple Linear Regression (MLR)}
-    We expanded to the Full Model ($p=13$):
-    $$ \mathbf{y} = \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\varepsilon} $$
-    
-    \begin{columns}
-        \column{0.6\textwidth}
-        \textbf{Model Performance}:
-        \begin{itemize}
-            \item $R^2 = 0.296$.
-            \item Test RMSE $\approx 12.06$ years.
-        \end{itemize}
-        
-        \vspace{0.2cm}
-        \textbf{Key Insights}:
-        \begin{itemize}
-            \item \texttt{Acousticness}: Strong negative trend ($\beta \approx -2.8$).
-            \item \texttt{Danceability}: Positive trend ($\beta \approx +22$).
-        \end{itemize}
-
-        \column{0.4\textwidth}
-        \begin{figure}
-            \includegraphics[width=\linewidth]{figures/partial_regression_partial_regression_-_acousticness.png}
-            \caption{Partial Regression: Acousticness}
-        \end{figure}
-    \end{columns}
-\end{frame}
-
-% -----------------------------------------------------------------------------
-% Section 3: Diagnostics
-% -----------------------------------------------------------------------------
-\section{Diagnostics: The Audit}
-
-\begin{frame}{Phase IV: Diagnostics Overview}
-    We rigorously tested the Gauss-Markov assumptions.
-    
-    \begin{table}[]
-        \centering
-        \begin{tabular}{llc}
-            \toprule
-            \textbf{Assumption} & \textbf{Test Used} & \textbf{Outcome} \\
-            \midrule
-            \textbf{Linearity} & Partial F-Test ($x_{dur}^2$) & \textcolor{red}{Reject ($F=304.7$)} \\
-            \textbf{Homoscedasticity} & Breusch-Pagan & \textcolor{red}{Reject ($LM=19391$)} \\
-            \textbf{Multicollinearity} & VIF Score & \textcolor{green}{Pass (Max $< 4.0$)} \\
-            \bottomrule
-        \end{tabular}
-        \caption{Diagnostic Summary}
-    \end{table}
-\end{frame}
-
-\begin{frame}{Residual Analysis: Boundedness \& Heterogeneity}
-    \begin{columns}
-        \column{0.6\textwidth}
-        \begin{figure}
-            \includegraphics[width=\linewidth]{figures/residuals_mlr_residuals.png}
-            \caption{Residuals vs Fitted (Note the diagonal boundaries)}
-        \end{figure}
-        
-        \column{0.4\textwidth}
-        \textbf{Boundedness Artifacts}:
-        \begin{itemize}
-            \item $Y \in [1960, 2020]$ creates diagonal ceilings/floors ($e = y - \hat{y}$).
-            \item Prediction space compressed at boundaries.
-        \end{itemize}
-        
-        \vspace{0.2cm}
-        \textbf{Heavy Tails (Q-Q Plot)}:
-        \begin{itemize}
-            \item Non-normal errors $\neq$ Model failure.
-            \item Indicates \textbf{Stylistic Heterogeneity} (Retro/Futuristic outliers).
-        \end{itemize}
-        
-        \vspace{0.2cm}
-        \textit{Remedy}: Robustness via CLT ($N=250k$). Non-normality justifies the \textbf{Nostalgia Index}.
-    \end{columns}
-\end{frame}
-
-% -----------------------------------------------------------------------------
-% Section 4: Structural Break
-% -----------------------------------------------------------------------------
-\section{The Structural Break (1999)}
-
-\begin{frame}{Phase VI: The Digital Revolution}
-    We hypothesized a structural break at $T=1999$ (Napster \& ProTools Era).
-    $$ y_i = \mathbf{x}_i^\top \boldsymbol{\beta} + \delta D_i + D_i (\mathbf{x}_i^\top \boldsymbol{\gamma}) + \varepsilon_i $$
-    where $D_i = \mathbb{I}(Year \ge 1999)$.
-    
-    \begin{alertblock}{Explanatory Result}
-        \begin{itemize}
-            \item \textbf{$R^2$ Variance Explained}: $0.296 \to \mathbf{0.734}$ (Explanatory).
-            \item \textbf{Interpretation}: This reflects the model's ability to fit the data once the "Digital Era" is accounted for.
-            \item \textbf{Conclusion}: The mechanism of music creation fundamentally changed in 1999.
-        \end{itemize}
-    \end{alertblock}
-\end{frame}
-
-\begin{frame}{The "Scissor Effect" (Interaction)}
-    \begin{columns}
-        \column{0.5\textwidth}
-        \textbf{Acousticness Coefficient Flip}:
-        \begin{itemize}
-            \item \textbf{Pre-1999}: $\beta \approx -2.8$ (Folk/Rock era).
-            \item \textbf{Post-1999}: $\beta + \gamma \approx +0.9$.
-            \item \textbf{Meaning}: In the digital era, acoustic elements became a stylistic choice (e.g., "Unplugged") rather than a technological limitation.
-        \end{itemize}
-        
-        \column{0.5\textwidth}
-        \begin{figure}
-            \includegraphics[width=\linewidth]{figures/scissor_plot.png}
-            \caption{Unified Scissor Plot: LOWESS Trend}
-        \end{figure}
-    \end{columns}
-\end{frame}
-
-% -----------------------------------------------------------------------------
-% Section 5: Model Selection
-% -----------------------------------------------------------------------------
-\section{Model Selection}
-
-\begin{frame}{Phase V: Seeking Parsimony}
-    We compared algorithms to select the optimal feature set.
-    
-    \begin{table}[]
-        \centering
-        \begin{tabular}{llcl}
-            \toprule
-            \textbf{Method} & \textbf{Criterion} & \textbf{Features} & \textbf{Verdict} \\
-            \midrule
-            Full Model & None & 13 & Baseline \\
-            \textbf{LASSO} & $L_1$ Penalty & 12 & \textbf{Preferred} \\
-            Stepwise & AIC & 11 & Too aggressive \\
-            \bottomrule
-        \end{tabular}
-    \end{table}
-    
-    \textbf{Outcome}:
-    We retained complex features like \texttt{Instrumentalness} and \texttt{Speechiness} as they carry era-specific signal (e.g., Solos vs Rap).
-\end{frame}
-
-% -----------------------------------------------------------------------------
-% Section 6: Applications
-% -----------------------------------------------------------------------------
-\section{Commercial Applications}
-
-\begin{frame}{The "Nostalgia Index"}
-    We propose a \textbf{Retro Detector} metric:
-    $$ \mathcal{N}_i = \hat{y}_{blind} - y_{actual} $$
-    
-    \begin{itemize}
-        \item $\mathcal{N} \ll 0$: Song sounds older than it is ("Retro").
-        \item $\mathcal{N} \gg 0$: Song sounds futuristic ("Avant-garde").
+        \item \textbf{Source}: Spotify 600k Tracks Dataset (Kaggle).
+        \item \textbf{Filter 1}: Timeframe $1960 \le T \le 2020$ (Modern Era).
+        \item \textbf{Filter 2}: \texttt{popularity > 30} (Focus on culturally significant music).
+        \item \textbf{Final Sample}: $N = \mathbf{250,971}$ tracks.
     \end{itemize}
     
     \vspace{0.5cm}
+    \textbf{Validation Strategy}:
+    \begin{itemize}
+        \item \textbf{Random Split}: 80\% Training / 20\% Test.
+        \item \textit{Rationale}: We are testing "feature recognition" (interpolating styles), not future forecasting (extrapolating time).
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{The Feature Set (p=13)}
+    We utilized all 13 available audio features.
+    
+    \begin{columns}[t]
+        \column{0.33\textwidth}
+        \textbf{Physical Features}
+        \begin{enumerate}
+            \item \texttt{Loudness} (dB)
+            \item \texttt{Tempo} (BPM)
+            \item \texttt{Duration} (ms)
+        \end{enumerate}
+        
+        \column{0.33\textwidth}
+        \textbf{Musical Features}
+        \begin{enumerate}
+            \setcounter{enumi}{3}
+            \item \texttt{Key} (0-11)
+            \item \texttt{Mode} (Major/Minor)
+            \item \texttt{Time Signature}
+        \end{enumerate}
+        
+        \column{0.33\textwidth}
+        \textbf{Perceptual Features}
+        \begin{enumerate}
+            \setcounter{enumi}{6}
+            \item \texttt{Acousticness}
+            \item \texttt{Danceability}
+            \item \texttt{Energy}
+            \item \texttt{Instrumentalness}
+            \item \texttt{Liveness}
+            \item \texttt{Speechiness}
+            \item \texttt{Valence} (Positivity)
+        \end{enumerate}
+    \end{columns}
+\end{frame}
+
+% -----------------------------------------------------------------------------
+% Section 2: Methodology Pipeline
+% -----------------------------------------------------------------------------
+\section{Methodology Pipeline}
+
+\begin{frame}{The Regression Pipeline}
+    We followed a rigorous 5-phase statistical workflow:
+    \vspace{0.5cm}
+    \begin{enumerate}
+        \item \textbf{Phase I: Simple Linear Regression (SLR)}
+        \textit{Hypothesis testing: The "Loudness War".}
+        
+        \item \textbf{Phase II: Multiple Linear Regression (MLR)}
+        \textit{Baseline model using all $p=13$ features.}
+        
+        \item \textbf{Phase III: The Diagnostic Audit} (Critical Step)
+        \textit{Testing Linearity, Multicollinearity, Normality, and Homoscedasticity.}
+        
+        \item \textbf{Phase IV: Model Selection}
+        \textit{Stepwise AIC vs LASSO comparison.}
+        
+        \item \textbf{Phase V: Refinement (WLS)}
+        \textit{Weighted Least Squares to correct for Heteroscedasticity.}
+    \end{enumerate}
+\end{frame}
+
+% -----------------------------------------------------------------------------
+% Section 3: Analysis
+% -----------------------------------------------------------------------------
+\section{Phases I-III: Diagnostics}
+
+\begin{frame}{Phase I: The "Loudness War" (SLR)}
+    $$ Year_i = \beta_0 + \beta_{loud} \cdot Loudness_i + \varepsilon_i $$
+    
+    \begin{columns}
+        \column{0.5\textwidth}
+        \includegraphics[width=0.9\linewidth]{eda_trends_over_time.png}
+        
+        \column{0.5\textwidth}
+        \textbf{Results}:
+        \begin{itemize}
+            \item $t$-stat: \textbf{183.7} (Highly Significant).
+            \item $\beta_{loud} \approx 1.2$ years/dB.
+            \item $R^2 = 0.144$.
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{Conclusion}: 
+        Tracks have consistently gotten louder, but Loudness alone explains only 14\% of the variance.
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Phase II: Multiple Linear Regression (Baseline)}
+    $$ \mathbf{y} = \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\varepsilon} $$
+    
+    \begin{itemize}
+        \item \textbf{Algorithm}: Ordinary Least Squares (OLS) with all 13 features.
+        \item \textbf{Result ($R^2$)}: \textbf{0.296}
+        \item \textbf{RMSE}: 12.06 years.
+    \end{itemize}
+    
+    \vspace{0.3cm}
+    \begin{alertblock}{Why so low?}
+       An $R^2$ of 0.3 suggests we are missing non-linear patterns or violating OLS assumptions. We initiated a \textbf{Diagnostic Audit}.
+    \end{alertblock}
+\end{frame}
+
+\begin{frame}{Phase III: Diagnostic Audit (1/2)}
+    \textbf{Test 1: Linearity}
+    \begin{itemize}
+        \item \textbf{Method}: Partial F-Test adding quadratic terms ($X^2$).
+        \item \textbf{Result}: $F \approx 304.7$, $p \approx 0.00$.
+        \item \textbf{Finding}: \textcolor{red}{Assumption Violated.} Relationship is non-linear.
+    \end{itemize}
+    
+    \vspace{0.5cm}
+    \textbf{Test 2: Multicollinearity}
+    \begin{itemize}
+        \item \textbf{Method}: Variance Inflation Factor (VIF).
+        \item \textbf{Concern}: High correlation between Loudness and Energy ($r=0.74$).
+        \item \textbf{Result}: Max VIF (Energy) = \textbf{3.78}. All VIFs $< 5.0$.
+        \item \textbf{Finding}: \textcolor{green}{Assumption Met.} No severe multicollinearity.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Phase III: Diagnostic Audit (2/2)}
+    \textbf{Test 3: Homoscedasticity (Constant Variance)}
+    
+    \begin{columns}
+        \column{0.5\textwidth}
+        \includegraphics[width=\linewidth]{residuals_mlr_residuals.png}
+        
+        \column{0.5\textwidth}
+        \begin{itemize}
+            \item \textbf{Visual}: Residuals fan out and have sharp boundaries.
+            \item \textbf{Test}: Breusch-Pagan.
+            \item \textbf{Statistic}: $\chi^2 = \mathbf{22,043}$.
+            \item \textbf{p-value}: $< 0.001$.
+            \item \textbf{Finding}: \textcolor{red}{CRITICAL FAILURE.} Variance is strictly time-dependent.
+        \end{itemize}
+    \end{columns}
+    
+    \vspace{0.3cm}
+    \textbf{Implication}: OLS estimators are unbiased but inefficient. Standard errors are wrong. \textbf{We must use WLS.}
+\end{frame}
+
+% -----------------------------------------------------------------------------
+% Section 4: Solution
+% -----------------------------------------------------------------------------
+\section{Phases IV-V: Refinement}
+
+\begin{frame}{Phase IV: Model Selection}
+    We compared two methods to identify the "True" feature set:
+    
+    \begin{table}[]
+        \centering
+        \begin{tabular}{lll}
+            \toprule
+            \textbf{Method} & \textbf{Selected Features} & \textbf{Key Difference} \\
+            \midrule
+            Stepwise (AIC) & 12 Features & Dropped \texttt{Key} \\
+            \rowcolor{green!10} LASSO ($L_1$) & \textbf{13 Features} & \textbf{Kept All Acoustic Features} \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+    
+    \vspace{0.3cm}
+    \textbf{Decision}: We utilized the full acoustic feature set.
+    \begin{itemize}
+        \item Removing variables offered negligible AIC improvement.
+        \item Retaining subtle features (Key, Mode) ensures we capture harmonic evolution.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Phase V: Weighted Least Squares (WLS)}
+    To cure Heteroscedasticity, we implemented WLS:
+    $$ \min_{\beta} \sum_{i=1}^{n} w_i (y_i - \mathbf{x}_i^T \beta)^2, \quad \text{where } w_i \propto \frac{1}{\text{Var}(\varepsilon_i)} $$
+    
+    \begin{columns}
+        \column{0.5\textwidth}
+        \includegraphics[width=0.8\linewidth]{pred_vs_act_best_model_(wls)_predictions.png}
+    
+        \column{0.5\textwidth}
+        \begin{alertblock}{What WLS Fixes}
+            \begin{itemize}
+                \item \textbf{Valid p-values} \& confidence intervals.
+                \item \textbf{Efficient coefficient estimates}.
+            \end{itemize}
+        \end{alertblock}
+        
+        \vspace{0.3cm}
+        \textbf{Metrics:}
+        \begin{itemize}
+            \item Weighted $R^2$: \textbf{0.77} (Trend Fit)
+            \item Unweighted Test $R^2$: $\approx 0.30$ (Raw Data)
+            \item Test \textbf{RMSE}: 12.0 years
+            \item Test \textbf{MAE}: 9.3 years
+        \end{itemize}
+    \end{columns}
+    
+    \vspace{0.2cm}
+    \footnotesize{\textit{Note: The jump to 0.77 reflects weighting down outliers, not miraculously predicting them. The raw prediction power remains similar to MLR (0.30).}}
+\end{frame}
+
+\begin{frame}{Phase VI-A: Technological Drivers ("The Sound of Efficiency")}
+    \textbf{Regression reveals the impact of technology on composition ($p < 0.001$).}
+    
+    \begin{itemize}
+        \item \textbf{The Loudness-Energy Paradox (Multicollinearity Insight)}:
+        \begin{itemize}
+            \item Mean \texttt{Loudness} has skyrocketed over time.
+            \item Yet, \texttt{Energy}'s coefficient is \textbf{negative} ($\beta \approx -5.4$) when controlling for Loudness.
+            \item \textbf{Interpretation}: Modern tracks are "loud" due to compression (technological), not raw musical energy (compositional).
+        \end{itemize}
+
+        \item \textbf{The Attention Economy (Duration)}:
+        \begin{itemize}
+            \item Coefficient $\beta_{duration} \approx -9.0\text{e-}6$ (Negative).
+            \item Songs are getting statistically shorter, likely driven by streaming incentives and skipping behavior.
+        \end{itemize}
+        
+        \item \textbf{Instrumentalness} ($\beta \approx +3.0$):
+        \small{A shift towards beat-driven (Hip-Hop/EDM) production over vocal-centric ballads.}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Phase VI-B: Cultural Evolution ("The Mood of an Era")}
+    \textbf{Applying Statistical Inference to Cultural Theory.}
+    
+    \begin{itemize}
+        \item \textbf{The "Sad Banger" Phenomenon}:
+        \begin{itemize}
+            \item \textbf{Danceability} ($\beta \approx +24.0$): The single strongest predictor. Rhythm is the defining feature of modernity.
+            \item \textbf{Valence} ($\beta \approx -16.5$): Optimism has collapsed.
+            \item \textbf{Synthesis}: We are dancing more, but feeling less.
+        \end{itemize}
+
+        \item \textbf{The Acousticness Paradox (Ceteris Paribus)}:
+        \begin{itemize}
+            \item Raw Correlation: Negative ($r \approx -0.12$).
+            \item WLS Coefficient: \textbf{Positive} ($\beta \approx +2.08$).
+            \item \textbf{Discovery}: \textit{Controlling for Loudness}, modern music actually retains significant acoustic elements (Indie, Lo-Fi), hidden by the "Wall of Sound".
+        \end{itemize}
+    \end{itemize}
+    
+    \begin{alertblock}{Analytical Triumph}
+       By using \textbf{Partial Regression Coefficients}, we uncovered trends (like the Acousticness reversal) that simple correlation would have missed.
+    \end{alertblock}
+\end{frame}
+
+% -----------------------------------------------------------------------------
+% Section 5: Applications
+% -----------------------------------------------------------------------------
+\section{Applications}
+
+\begin{frame}{The Nostalgia Index}
+    \textit{"One man's error is another man's feature."}
+    
+    We define the \textbf{Nostalgia Index} as the model's prediction error:
+    $$ \text{Index} = | \hat{Y}_{predicted} - Y_{actual} | $$
+    
+    High index = A song that "sounds" like it belongs to a different era.
+    
+    \vspace{0.3cm}
     \begin{table}[]
         \centering
         \small
-        \begin{tabular}{lcccc}
+        \begin{tabular}{ll ccc}
             \toprule
-            \textbf{Song} & \textbf{Actual} & \textbf{Pred} & \textbf{$\Delta$ (Yrs)} & \textbf{Vibe} \\
+            \textbf{Song} & \textbf{Year} & \textbf{Predicted} & \textbf{Index} & \textbf{Diagnosis} \\
             \midrule
-            The Weeknd - \textit{Echoes} & 2012 & 1993.1 & \textbf{-18.9} & 90s R\&B \\
-            Mark Ronson - \textit{Uptown} & 2015 & 2013.1 & \textbf{-1.9} & Retro-ish \\
-            Dua Lipa - \textit{Physical} & 2020 & 2009.0 & \textbf{-11.0} & 80s Synth \\
+            \textit{Uptown Funk} (Ronson) & 2015 & 2013.1 & \textbf{1.9} & Modern Construction \\
+            \textit{Physical} (Dua Lipa) & 2020 & 2009.0 & \textbf{11.0} & \textbf{Retro Aesthetic} \\
+            \textit{Blinding Lights} (Weeknd) & 2019 & 2004.2 & \textbf{14.8} & \textbf{80s Revival} \\
             \bottomrule
         \end{tabular}
-        \caption{Verified Predictions on Test Set}
     \end{table}
 \end{frame}
 
-\begin{frame}{Visualizing Prediction Accuracy}
-    \centering
-    \begin{figure}
-        \includegraphics[height=0.6\textheight]{figures/pred_vs_act_final_break_model_predictions.png}
-        \caption{Actual vs Predicted (Test Set). Note the tighter fit post-1999.}
-    \end{figure}
-\end{frame}
-
-% -----------------------------------------------------------------------------
-% Conclusion
-% -----------------------------------------------------------------------------
-\section{Conclusion}
-
 \begin{frame}{Conclusion}
+    \Large
     \begin{enumerate}
-        \item \textbf{Success}: We can date music/audio with $RMSE \approx 7$ years (Era-Informed).
-        \item \textbf{Discovery}: 1999 was a structural singularity in music history.
-        \item \textbf{Utility}: The Nostalgia Index successfully identifies "Retro" hits.
-        \item \textbf{Curriculum Alignment}: Fully utilized SLR, MLR, Diagnostics, Ridge/Lasso, and Interaction effects.
+        \item \textbf{Recognition}: We can date music to within $\pm 9$ years purely from audio.
+        \item \textbf{Rigor}: Diagnostics proved OLS is insufficient; WLS is required.
+        \item \textbf{Insight}: Musical evolution is quantifiable.
+        \item \textbf{Value}: The Nostalgia Index provides a commercial metric for "Vibe".
     \end{enumerate}
     
     \vspace{1cm}
     \centering
-    \Large \textbf{Thank You} \\
-    \small \textit{Questions?}
+    \textbf{Thank You.}
 \end{frame}
 
 \end{document}

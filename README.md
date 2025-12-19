@@ -1,48 +1,54 @@
 # Musical Carbon Dating 🎵
-**A Structural Break Analysis of Music Evolution (1960-2020)**
+**A Statistical Feature Recognition Analysis (1960-2020)**
 
-> *"Does the 'Arrow of Time' exist in music production?"*
+> *"Can we timestamp a musical recording purely from its acoustic properties?"*
 
-This project performs a rigorous statistical analysis on over **250,000 tracks** to quantify how music production has evolved over the last 60 years. By identifying a critical **Structural Break in 1999**, we prove that the relationship between audio features (like *Acousticness*) and time is not linear, but underwent a paradigm shift during the Digital Revolution.
+This project implements a rigorous statistical pipeline to quantifiably "carbon date" music. By analyzing **13 physical and perceptual audio features** (e.g., *Tempo*, *Valence*, *Spectral Energy*) across **250,971 tracks**, we demonstrate that musical eras have distinct, mathematically recognizable acoustic fingerprints.
 
 ---
 
-## 📊 Key Findings
+## 📊 Key Results (Verified)
 
-### 1. The 1999 Singularity
-We identified a massive structural break in music history around **1999** (Napster/ProTools era).
-- **Baseline Model**: $R^2 \approx 0.30$ (Blind prediction).
-- **Structural Break Model**: $R^2 \rightarrow 0.73$ (Explanatory power).
+### 1. Robust Prediction
+Despite the complexity of artistic expression, our **Weighted Least Squares (WLS)** model achieves strong predictive power:
+- **$R^2$**: **0.774**. (77% of variance explained by acoustic physics alone).
+- **MAE**: **9.72 years**. (Average error < 1 decade).
+- *See `output/figures/pred_vs_act_best_model_(wls)_predictions.png`.*
 
-### 2. The "Scissor Effect" (Unified Trend)
-Our **Unified LOWESS Analysis** reveals a "check-mark" trend in features like *Acousticness*:
-- **Pre-1999 (Analog Decline)**: Strong negative variance. Technology replaced acoustic instruments.
-- **Post-1999 (Digital Choice)**: Variance flips. Acousticness becomes a *stylistic choice* rather than a limitation.
-- *See `output/figures/scissor_plot.png` for the unified visualization.*
+### 2. Statistical Rigor
+We explicitly address the failures of standard OLS regression:
+- **Heteroscedasticity**: Diagnosed via **Breusch-Pagan Test** ($\chi^2 \approx 22,043, p < 0.001$) and corrected with WLS weights ($w_i \propto 1/\sigma_i^2$).
+- **Non-Linearity**: Confirmed via Partial F-Tests ($F \approx 305$).
+- **Feature Selection**: **LASSO ($L_1$)** regularization validated the use of all 13 acoustic features, confirming that even subtle markers (like *Key* and *Mode*) are essential for tracking harmonic evolution.
 
 ### 3. The "Nostalgia Index"
-We define prediction error as a commercial metric: $\mathcal{N}_i = \hat{y}_{blind} - y_{actual}$.
-- **Insight**: Large negative $\mathcal{N}$ values identify modern songs with "Vintage DNA".
-- **Verified Hits**: *Uptown Funk* (-2 yrs), *Physical* (-11 yrs), *Echoes of Silence* (-19 yrs).
+We define prediction error as a commercial metric: $\text{Index} = |\hat{y}_{pred} - y_{actual}|$.
+- **Insight**: High index values identify songs that are "Time-Displaced" (Retro or Futuristic).
+- **Examples**:
+  - *Uptown Funk* (2015): Index 1.9 (Modern construction).
+  - *Physical* (Dua Lipa, 2020): **Index 11.0** (Strong 80s aesthetic).
 
 ---
 
 ## 🛠 Project Structure
 
 ```text
-├── data/                   # Dataset
+├── data/                   # Dataset (Spotify 600k Tracks)
 ├── src/                    # Source Code
-│   ├── analysis.py         # Regression Engine (OLS, WLS, Chow Test)
-│   ├── config.py           # Central Configuration
-│   ├── visualization.py    # Plotting Logic (Unified Scissor Plot)
-│   └── ...
-├── scripts/                # Utility Scripts
-│   └── check_robustness.py # "Nostalgia Index" Validator
+│   ├── analysis.py         # Regression Engine (OLS, WLS, Ridge, LASSO, Stepwise)
+│   ├── config.py           # Configuration (Feature Definitions)
+│   ├── data_loader.py      # Data Preprocessing
+│   └── visualization.py    # Plotting Logic
 ├── report/                 # [FINAL] Formal LaTeX Report
-│   ├── main.tex Source
-│   └── figures/            # Generated Figures for Report
+│   ├── main.tex            # Comprehensive Academic Report
+│   └── figures/            # Auto-generated Figures
 ├── slides/                 # Presentation Slides (Beamer)
-├── output/                 # Generated Artifacts (Logs & Figures)
+│   ├── main.tex            # "No Hiding" Detailed Slides
+│   └── speaker_notes.md    # 22-min Verbatim Script (5 Speakers)
+├── output/                 # Generated Artifacts
+│   ├── figures/            # Residual Plots, Q-Q Plots, Prediction Plots
+│   ├── tables/             # CSV Results
+│   └── pipeline_verified.log # Definitive Statistical Output
 └── main.py                 # Main Execution Pipeline
 ```
 
@@ -58,25 +64,33 @@ pip install -r requirements.txt
 ```
 
 ### 2. Run Main Analysis
-Execute the full pipeline (Data Load -> EDA -> OLS -> Diagnostics -> Structural Break -> Plots):
+Execute the full pipeline (Data Load -> Feature Selection -> WLS -> Diagnostics):
 ```bash
 python3 main.py
 ```
-*Check `output/pipeline.log` for statistical summaries.*
+*This will generate all figures in `output/figures/` and metrics in `output/pipeline_verified.log`.*
 
-### 3. "Carbon Date" Specific Tracks
-Run the robustness script to test the "Nostalgia Index" on modern hits:
+### 3. Compile Documentation
+To build the PDF report and slides:
 ```bash
-python3 scripts/check_robustness.py
+# Compile Report
+cd report
+latexmk -pdf main.tex
+
+# Compile Slides
+cd ../slides
+latexmk -pdf main.tex
 ```
 
 ---
 
-## 📄 Documentation
+## 📄 Methodology Summary
 
-- **Full Report**: [report/main.tex](report/main.tex) (LaTeX Source)
-- **Presentation**: [slides/main.tex](slides/main.tex) (Beamer Source)
-- **Walkthrough**: See `walkthrough.md` for a step-by-step project tour.
+1.  **Phase I (SLR)**: The "Loudness War" analysis ($R^2=0.14$).
+2.  **Phase II (MLR)**: Baseline multiple regression ($R^2=0.29$).
+3.  **Phase III (Diagnostics)**: Testing Linearity, Multicollinearity (VIF), and Homoscedasticity (BP Test).
+4.  **Phase IV (Model Selection)**: Comparison of Stepwise AIC vs LASSO.
+5.  **Phase V (Refinement)**: Implementation of WLS to handle variance instability.
 
 ---
 *University Statistical Analysis Project | Term: Fall 2024*

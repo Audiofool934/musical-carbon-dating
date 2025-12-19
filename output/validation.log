@@ -1,0 +1,25 @@
+--- Nostalgia Index Validation ---
+Loading data from /Users/audiofool/Projects/musical-carbon-dating/data/tracks.csv...
+Data cleaning: 586672 -> 250971 tracks selected.
+Train set size: 200776
+Test set size: 50195
+Fitting baseline MLR model for Carbon Dating...
+Analyzing 41456 modern tracks for retro-production styles...
+
+--- Verifying Specific Hits mentioned in Report ---
+Song: Echoes Of Silence | Actual: 2012 | Pred: 1993.1 | Score: -18.9
+Song: Uptown Funk (feat. Bruno Mars) | Actual: 2015 | Pred: 2013.1 | Score: -1.9
+Song: Physical | Actual: 2020 | Pred: 2009.0 | Score: -11.0
+
+--- Top 10 'Nostalgic' Tracks (Modern songs sounding old) ---
+                               name                  artists  year predicted_year nostalgia_score
+                        Cabin Sound           ['HI-FI CAMP']  2017        1,942.0           -75.0
+                 Dulled White Noise              ['Lila Om']  2017        1,947.1           -69.9
+                  Empty Field Noise            ['Mark Biem']  2017        1,947.9           -69.1
+                     Big Fan Dulled    ['The Noise Project']  2017        1,951.4           -65.6
+           Brown Noise - 90 Minutes        ['Sound Dreamer']  2013        1,947.9           -65.1
+                    Video Game Wind               ['Latium']  2017        1,957.4           -59.6
+           White Noise - Res 125 hz             ['Granular']  2017        1,957.8           -59.2
+Piano Baby Lullabies for Baby Sleep ['Baby Lullaby Academy']  2015        1,956.5           -58.5
+                       Som do Útero          ['Para Dormir']  2017        1,960.4           -56.6
+     Sleeping Music and Sleep Music ['Baby Lullaby Academy']  2015        1,959.7           -55.3

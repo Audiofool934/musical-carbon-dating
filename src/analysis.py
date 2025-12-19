@@ -7,7 +7,7 @@ import numpy as np
 from scipy import stats
 from sklearn.linear_model import Ridge, Lasso
 from sklearn.preprocessing import StandardScaler
-from .config import FEATURE_COLS, BREAK_YEAR
+from .config import FEATURE_COLS
 
 class RegressionAnalysis:
     def __init__(self, X_train, y_train, X_test, y_test):
@@ -78,6 +78,7 @@ class RegressionAnalysis:
         if features is None:
             features = [c for c in self.X_train.columns if c != 'year' and c in FEATURE_COLS]
             
+        # Revert: Constant IS required for valid VIF (centered vs uncentered variance)
         X = sm.add_constant(self.X_train[features])
         vif_data = pd.DataFrame()
         vif_data["feature"] = X.columns
@@ -85,6 +86,39 @@ class RegressionAnalysis:
                           for i in range(len(X.columns))]
         print(vif_data.sort_values(by="VIF", ascending=False))
         return vif_data
+
+    # ... (skipping unchanged resonance) ...
+
+    def evaluate_model(self, model, features_used=None):
+        """Phase VI: Evaluation on Test Set"""
+        print("\n--- Phase VI: Final Model Evaluation ---")
+        from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+        
+        # If features_used not provided, derive from model params
+        if features_used is None:
+            features_used = [col for col in model.params.index if col != 'const']
+        
+        # Prepare Test Data (only use actual features, not derived ones)
+        # Filter to only include columns that exist in X_test
+        available_features = [f for f in features_used if f in self.X_test.columns]
+        
+        X_test_const = sm.add_constant(self.X_test[available_features], has_constant='add')
+        
+        # Align columns with model parameters
+        cols_needed = [col for col in model.params.index if col in X_test_const.columns]
+        X_final = X_test_const[cols_needed]
+        
+        y_pred = model.predict(X_final)
+        
+        rmse = np.sqrt(mean_squared_error(self.y_test, y_pred))
+        mae = mean_absolute_error(self.y_test, y_pred)
+        r2 = r2_score(self.y_test, y_pred)
+        
+        print(f"Test Set RMSE: {rmse:.4f}")
+        print(f"Test Set MAE: {mae:.4f}")
+        print(f"Test Set R² (Unweighted): {r2:.4f}")
+        
+        return y_pred
 
     def run_ridge_regression(self, features=None, alpha=1.0):
         """Phase IV: Ridge Regression"""
@@ -121,6 +155,7 @@ class RegressionAnalysis:
         print(f"Best Lambda: {lambda_best:.4f}")
         return y_transformed, lambda_best
 
+
     def fit_wls(self, model):
         """Phase IV: Weighted Least Squares (Alternative to Box-Cox)"""
         print("\n--- Phase IV: Weighted Least Squares (WLS) ---")
@@ -130,9 +165,22 @@ class RegressionAnalysis:
         # More robust: use absolute residuals helpful for heteroscedasticity
         weights = 1.0 / (residuals.abs() + 1e-6) # prevent div by zero
         
-        wls_model = sm.WLS(self.y_train, model.model.exog, weights=weights).fit()
+        # Preserve the original exog with proper column names
+        exog_with_names = model.model.exog
+        # Create DataFrame with proper names to preserve them
+        import pandas as pd
+        if not isinstance(exog_with_names, pd.DataFrame):
+            exog_df = pd.DataFrame(exog_with_names, columns=model.model.exog_names)
+        else:
+            exog_df = exog_with_names.copy()
+        
+        # Reset index to ensure alignment
+        exog_df.index = self.y_train.index
+        weights.index = self.y_train.index
+            
+        wls_model = sm.WLS(self.y_train, exog_df, weights=weights).fit()
         print(wls_model.summary())
-        return wls_model
+        return wls_model, weights
 
     def check_nonlinearity(self, model, feature='duration_ms'):
         """Phase IV: Check for non-linearity & Partial F-Test"""
@@ -219,58 +267,65 @@ class RegressionAnalysis:
         print(f"Lasso Selected Features: {selected_features}")
         return selected_features
 
-    def chow_test(self, break_year=BREAK_YEAR):
-        """Phase VI: Chow Test / Structural Break"""
-        print(f"\n--- Phase VI: Structural Break Test (Year > {break_year}) ---")
-        # Dummy variable
-        X = self.X_train.copy()
-        X['break_dummy'] = (self.y_train > break_year).astype(int)
+    def compare_models(self, models_dict, test_set=False):
+        """
+        Phase VI: Compare multiple models using AIC, BIC, and optionally test RMSE.
         
-        # Interactions
-        features = [c for c in self.X_train.columns if c != 'year' and c in FEATURE_COLS]
-        for f in features:
-            X[f'interact_{f}'] = X[f] * X['break_dummy']
+        Args:
+            models_dict: Dictionary of {'model_name': model_object}
+            test_set: If True, compute test set RMSE
             
-        full_features = features + ['break_dummy'] + [f'interact_{f}' for f in features]
-        X_const = sm.add_constant(X[full_features])
+        Returns:
+            DataFrame with comparison metrics
+        """
+        print("\n--- Model Comparison ---")
+        from sklearn.metrics import mean_squared_error
         
-        model_break = sm.OLS(self.y_train, X_const).fit()
-        print(model_break.summary())
-        return model_break
+        results = []
+        for name, model in models_dict.items():
+            result = {
+                'Model': name,
+                'AIC': model.aic if hasattr(model, 'aic') else np.nan,
+                'BIC': model.bic if hasattr(model, 'bic') else np.nan,
+                'R²': model.rsquared if hasattr(model, 'rsquared') else np.nan,
+                'Adj_R²': model.rsquared_adj if hasattr(model, 'rsquared_adj') else np.nan,
+            }
+            
+            if test_set and self.X_test is not None:
+                try:
+                    # Get feature names from model
+                    feature_names = [col for col in model.params.index if col != 'const']
+                    X_test_subset = sm.add_constant(self.X_test[feature_names], has_constant='add')
+                    y_pred = model.predict(X_test_subset)
+                    rmse = np.sqrt(mean_squared_error(self.y_test, y_pred))
+                    result['Test_RMSE'] = rmse
+                except Exception as e:
+                    result['Test_RMSE'] = np.nan
+                    print(f"  Warning: Could not compute test RMSE for {name}: {e}")
+            
+            results.append(result)
+        
+        comparison_df = pd.DataFrame(results)
+        print(comparison_df.to_string(index=False))
+        return comparison_df
 
-    def evaluate_model(self, model, features_used):
+    def evaluate_model(self, model, features_used=None):
         """Phase VI: Evaluation on Test Set"""
         print("\n--- Phase VI: Final Model Evaluation ---")
         from sklearn.metrics import mean_squared_error, mean_absolute_error
         
-        # Prepare Test Data
-        # features_used must match the columns in model.params (excluding const)
-        # Handle interaction terms if structural break model
+        # If features_used not provided, derive from model params
+        if features_used is None:
+            features_used = [col for col in model.params.index if col != 'const']
         
-        X_test_processed = self.X_test.copy()
+        # Prepare Test Data (only use actual features, not derived ones)
+        # Filter to only include columns that exist in X_test
+        available_features = [f for f in features_used if f in self.X_test.columns]
         
-        # Check if model has interaction terms
-        is_structural = 'break_dummy' in features_used or 'break_dummy' in model.params.index
+        X_test_const = sm.add_constant(self.X_test[available_features], has_constant='add')
         
-        if is_structural:
-            break_year = BREAK_YEAR
-            X_test_processed['break_dummy'] = (self.y_test > break_year).astype(int)
-            base_feats = [f for f in FEATURE_COLS if f in X_test_processed.columns]
-            for f in base_feats:
-                if f"interact_{f}" in model.params.index:
-                     X_test_processed[f'interact_{f}'] = X_test_processed[f] * X_test_processed['break_dummy']
-        
-        # Align columns
-        # Add const
-        X_test_const = sm.add_constant(X_test_processed, has_constant='add')
-        
-        # Select Only columns present in model
-        # model.params includes const
-        cols_needed = model.params.index.tolist()
-        
-        # Ensure all columns exist (fill 0 if missing? Should not happen if logic is correct)
-        # Note: const is mostly added by statsmodels
-        
+        # Align columns with model parameters
+        cols_needed = [col for col in model.params.index if col in X_test_const.columns]
         X_final = X_test_const[cols_needed]
         
         y_pred = model.predict(X_final)
