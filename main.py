@@ -9,8 +9,25 @@ from src.eda import run_eda
 from src.config import TARGET_COL, BREAK_YEAR
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler  # <--- 新增导入
+import warnings
+import os
+from src.config import FIGURES_DIR  # Import for debug printing
 
 def main():
+    # Suppress seaborn/pandas future warning
+    warnings.simplefilter(action='ignore', category=FutureWarning)
+    pd.options.mode.use_inf_as_na = True
+
+    # Debug: Print where figures are being saved
+    print(f"DEBUG: Saving figures to: {os.path.abspath(FIGURES_DIR)}")
+    # === 0. 全局设置：修复字体报错 ===
+    # 强制使用系统默认的无衬线字体，避免 'Avenir' 找不到的问题
+    plt.rcParams['font.family'] = 'sans-serif'
+    plt.rcParams['font.sans-serif'] = ['Arial', 'DejaVu Sans', 'SimHei', 'sans-serif']
+    plt.rcParams['axes.unicode_minus'] = False # 解决负号显示问题
+
     print("="*80)
     print("Musical Carbon Dating: Two-Stage Analysis")
     print("Stage 1: Year Prediction (Regression Modeling)")
@@ -31,13 +48,39 @@ def main():
     print("="*80)
     run_eda(train_df)
     
-    X_train = train_df.drop(columns=[TARGET_COL])
-    y_train = train_df[TARGET_COL]
-    X_test = test_df.drop(columns=[TARGET_COL])
-    y_test = test_df[TARGET_COL]
+    # --- 数据拆分 ---
+    # 原始的 X 和 y
+    X_train_raw = train_df.drop(columns=[TARGET_COL])
+    y_train = train_df[TARGET_COL]  # 注意：y (年份) 不做标准化
     
-    # Initialize Analysis Engine
-    analyzer = RegressionAnalysis(X_train, y_train, X_test, y_test)
+    X_test_raw = test_df.drop(columns=[TARGET_COL])
+    y_test = test_df[TARGET_COL]    # 注意：y (年份) 不做标准化
+    
+    # --- [新增步骤] 标准化处理 (Standardization) ---
+    print("\n>>> Applying Standardization (Z-Score Normalization) to Features...")
+    
+    scaler = StandardScaler()
+    
+    # 1. 在训练集上 Fit (计算均值和方差) 并 Transform
+    # 必须重新构建 DataFrame，否则会变成 numpy array 丢失列名，导致后续画图报错
+    X_train_scaled = pd.DataFrame(
+        scaler.fit_transform(X_train_raw),
+        columns=X_train_raw.columns,
+        index=X_train_raw.index
+    )
+    
+    # 2. 在测试集上仅 Transform (使用训练集的均值和方差)
+    # 严禁在测试集上 fit，防止数据泄露
+    X_test_scaled = pd.DataFrame(
+        scaler.transform(X_test_raw),
+        columns=X_test_raw.columns,
+        index=X_test_raw.index
+    )
+    
+    print("[OK] Features scaled successfully. Means are ~0, Stds are ~1.")
+    
+    # Initialize Analysis Engine (使用标准化后的数据)
+    analyzer = RegressionAnalysis(X_train_scaled, y_train, X_test_scaled, y_test)
     
     # === Phase I: Simple Linear Regression ===
     print("\n" + "="*80)
@@ -52,13 +95,15 @@ def main():
     mlr_model = analyzer.fit_mlr()
     
     # Generate baseline MLR prediction plot (for comparison with WLS)
-    mlr_features = [c for c in X_train.columns if c != 'year']
+    mlr_features = [c for c in X_train_scaled.columns if c != 'year'] # 使用 scaled 的列名
     import statsmodels.api as sm
-    X_test_mlr = sm.add_constant(X_test[mlr_features], has_constant='add')
+    # 注意：这里也需要手动给测试集加常数项，因为 statsmodels 不会自动加
+    X_test_mlr = sm.add_constant(X_test_scaled[mlr_features], has_constant='add')
     mlr_pred = mlr_model.predict(X_test_mlr)
     plot_actual_vs_predicted(y_test, mlr_pred, title="Baseline MLR Predictions")
     
     # Partial Regression Plots (Added Variable Plots)
+    # 注意：exog_idx 可能需要根据标准化后的列顺序确认，通常没变
     plot_partial_regression(mlr_model, exog_idx=0, title="MLR Partial Regression")
     
     # === Phase III: Regression Diagnostics ===
@@ -103,7 +148,7 @@ def main():
     # Test robustness without popularity
     mlr_nopop = analyzer.fit_mlr_no_popularity()
     
-    # Ridge Regression
+    # Ridge Regression (标准化后，这里的 Ridge 才是正确有效的)
     ridge_model = analyzer.run_ridge_regression(alpha=1.0)
     
     # === Phase V: Model Selection ===
@@ -114,7 +159,7 @@ def main():
     # Stepwise Selection (AIC-based)
     stepwise_features = analyzer.stepwise_selection()
     
-    # LASSO Selection
+    # LASSO Selection (标准化后，这里的 Lasso 选出的特征才是准确的)
     lasso_features = analyzer.model_selection_lasso(alpha=0.01)
     
     print(f"\nFeature Comparison:")
@@ -139,7 +184,7 @@ def main():
     best_model_name = comparison_df.sort_values('AIC').iloc[0]['Model']
     best_model = models_dict[best_model_name]
     
-    print(f"\n✓ Best Model Selected: {best_model_name}")
+    print(f"\n[OK] Best Model Selected: {best_model_name}")
     plot_coefficients_with_ci(best_model, title=f"{best_model_name} Coefficients (95% CI)")
     
     # Final Evaluation on Test Set
@@ -178,7 +223,7 @@ def main():
     
     output_path = 'output/tables/predictions_with_nostalgia_index.csv'
     test_df_with_predictions.to_csv(output_path, index=False)
-    print(f"\n✓ Results saved to {output_path}")
+    print(f"\n[OK] Results saved to {output_path}")
     
     print("\n" + "="*80)
     print("PIPELINE COMPLETE!")

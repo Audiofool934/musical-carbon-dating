@@ -1,0 +1,5 @@
+\beamer@sectionintoc {1}{Overview \& Data}{4}{0}{1}
+\beamer@sectionintoc {2}{Methodology Pipeline}{7}{0}{2}
+\beamer@sectionintoc {3}{Phases I-III: Diagnostics}{8}{0}{3}
+\beamer@sectionintoc {4}{Phases IV-V: Refinement}{12}{0}{4}
+\beamer@sectionintoc {5}{Applications}{16}{0}{5}
