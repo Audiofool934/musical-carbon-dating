@@ -11,51 +11,58 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Data Characteristics}{2}{subsection.2.1}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Descriptive Statistics of Audio Features (Raw Data - Reference). Note: Analysis proceeds with standardized features.}}{2}{table.1}\protected@file@percent }
 \newlabel{tab:descriptive}{{1}{2}{Descriptive Statistics of Audio Features (Raw Data - Reference). Note: Analysis proceeds with standardized features}{table.1}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Distribution of Audio Features across the filtered dataset (Standardized).}}{2}{figure.2}\protected@file@percent }
-\newlabel{fig:distributions}{{2}{2}{Distribution of Audio Features across the filtered dataset (Standardized)}{figure.2}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {3}Regression Analysis}{3}{section.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Phase I: The "Loudness War" (Simple Linear Regression)}{3}{subsection.3.1}\protected@file@percent }
 \newlabel{eq:slr}{{1}{3}{Phase I: The "Loudness War" (Simple Linear Regression)}{equation.1}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Evolution of Audio Features (1960--2020). These trends illustrate the "Arrow of Time" in music production, with Loudness showing a consistent increase (the "Loudness War") while other features like Acousticness and Valence exhibit significant historical shifts.}}{3}{figure.3}\protected@file@percent }
-\newlabel{fig:feature_trends}{{3}{3}{Evolution of Audio Features (1960--2020). These trends illustrate the "Arrow of Time" in music production, with Loudness showing a consistent increase (the "Loudness War") while other features like Acousticness and Valence exhibit significant historical shifts}{figure.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Evolution of Audio Features (1960--2020). These trends illustrate the "Arrow of Time" in music production, with Loudness showing a consistent increase (the "Loudness War") while other features like Acousticness and Valence exhibit significant historical shifts.}}{3}{figure.2}\protected@file@percent }
+\newlabel{fig:feature_trends}{{2}{3}{Evolution of Audio Features (1960--2020). These trends illustrate the "Arrow of Time" in music production, with Loudness showing a consistent increase (the "Loudness War") while other features like Acousticness and Valence exhibit significant historical shifts}{figure.2}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Phase II: Multiple Linear Regression (Baseline)}{3}{subsection.3.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Phase III: Diagnostic Audit}{3}{subsection.3.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.1}A. Linearity \& Multicollinearity}{3}{subsubsection.3.3.1}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Representative VIF Scores (Baseline MLR). Multicollinearity is not a threat to coefficient stability.}}{4}{table.2}\protected@file@percent }
 \newlabel{tab:vif}{{2}{4}{Representative VIF Scores (Baseline MLR). Multicollinearity is not a threat to coefficient stability}{table.2}{}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.2}B. Residual Analysis}{4}{subsubsection.3.3.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Residuals vs Fitted plot. The plot shows the distribution of prediction errors across the range of fitted years, revealing the inherent variance in musical styles.}}{4}{figure.4}\protected@file@percent }
-\newlabel{fig:residuals}{{4}{4}{Residuals vs Fitted plot. The plot shows the distribution of prediction errors across the range of fitted years, revealing the inherent variance in musical styles}{figure.4}{}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.3}C. Heteroscedasticity}{4}{subsubsection.3.3.3}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Prediction Error by Era. Variance expands significantly in later decades, suggesting "Stylistic Entropy" where modern music encompasses a wider, more chaotic range of production styles than the 1960s.}}{4}{figure.5}\protected@file@percent }
-\newlabel{fig:error_era}{{5}{4}{Prediction Error by Era. Variance expands significantly in later decades, suggesting "Stylistic Entropy" where modern music encompasses a wider, more chaotic range of production styles than the 1960s}{figure.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Phase IV: Model Refinement (WLS)}{5}{subsection.3.4}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Model Performance (Test Set). The diagonal concentration demonstrates the model's ability to recognize eras, though significant vertical spread remains due to stylistic cross-pollination.}}{5}{figure.6}\protected@file@percent }
-\newlabel{fig:wls_fit}{{6}{5}{Model Performance (Test Set). The diagonal concentration demonstrates the model's ability to recognize eras, though significant vertical spread remains due to stylistic cross-pollination}{figure.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Prediction Error by Era. Variance expands significantly in later decades, suggesting "Stylistic Entropy" where modern music encompasses a wider, more chaotic range of production styles than the 1960s.}}{4}{figure.3}\protected@file@percent }
+\newlabel{fig:error_era}{{3}{4}{Prediction Error by Era. Variance expands significantly in later decades, suggesting "Stylistic Entropy" where modern music encompasses a wider, more chaotic range of production styles than the 1960s}{figure.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Phase IV: Model Refinement (WLS)}{4}{subsection.3.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Model Performance (Test Set). The diagonal concentration demonstrates the model's ability to recognize eras, though significant vertical spread remains due to stylistic cross-pollination.}}{5}{figure.4}\protected@file@percent }
+\newlabel{fig:wls_fit}{{4}{5}{Model Performance (Test Set). The diagonal concentration demonstrates the model's ability to recognize eras, though significant vertical spread remains due to stylistic cross-pollination}{figure.4}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Model Comparison. WLS improves inference validity without degrading predictive accuracy significantly.}}{5}{table.3}\protected@file@percent }
 \newlabel{tab:comparison}{{3}{5}{Model Comparison. WLS improves inference validity without degrading predictive accuracy significantly}{table.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Phase V: Model Selection}{6}{subsection.3.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.5.1}A. Stepwise Selection (AIC)}{6}{subsubsection.3.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Phase V: Model Selection}{5}{subsection.3.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.5.1}A. Stepwise Selection (AIC)}{5}{subsubsection.3.5.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {3.5.2}B. LASSO Regularization}{6}{subsubsection.3.5.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces LASSO Cross-Validation Plot. The MSE remains relatively flat, confirming that most predictors are informative.}}{6}{figure.7}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Comparison of Test RMSE across different selection methods.}}{6}{figure.8}\protected@file@percent }
-\newlabel{fig:model_selection}{{3.5.2}{6}{B. LASSO Regularization}{figure.8}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces WLS Coefficients with 95\% Confidence Intervals. The Intercept represents the average year relative to the production era, while slopes quantify the "Arrow of Time".}}{6}{figure.9}\protected@file@percent }
-\newlabel{fig:coef}{{9}{6}{WLS Coefficients with 95\% Confidence Intervals. The Intercept represents the average year relative to the production era, while slopes quantify the "Arrow of Time"}{figure.9}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces LASSO Cross-Validation Plot. The MSE remains relatively flat, confirming that most predictors are informative.}}{6}{figure.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Comparison of Test RMSE across different selection methods.}}{6}{figure.6}\protected@file@percent }
+\newlabel{fig:model_selection}{{3.5.2}{6}{B. LASSO Regularization}{figure.6}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {4}Discussion: Musicological Discovery}{6}{section.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}The Loudness-Energy Paradox}{7}{subsection.4.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}The Sad Banger Hypothesis}{7}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}The Loudness-Energy Paradox}{6}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}The Sad Banger Hypothesis}{6}{subsection.4.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.3}The Attention Economy and Omitted Variable Bias}{7}{subsection.4.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.4}The Acousticness Paradox}{7}{subsection.4.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {5}Applications: The Nostalgia Index}{7}{section.5}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Illustrative examples of the Nostalgia Index on culturally significant tracks.}}{7}{table.4}\protected@file@percent }
 \newlabel{tab:retro}{{4}{7}{Illustrative examples of the Nostalgia Index on culturally significant tracks}{table.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Distribution of the Nostalgia Index. The heavy tail represents tracks with extreme stylistic displacement.}}{8}{figure.10}\protected@file@percent }
-\newlabel{fig:nostalgia_dist}{{10}{8}{Distribution of the Nostalgia Index. The heavy tail represents tracks with extreme stylistic displacement}{figure.10}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {6}Conclusion}{8}{section.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Distribution of the Nostalgia Index. The heavy tail represents tracks with extreme stylistic displacement.}}{7}{figure.7}\protected@file@percent }
+\newlabel{fig:nostalgia_dist}{{7}{7}{Distribution of the Nostalgia Index. The heavy tail represents tracks with extreme stylistic displacement}{figure.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Conclusion}{7}{section.6}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {A}Technical Regression Results}{8}{appendix.A}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Full WLS Regression Parameters ($R^2_{weighted} = 0.24$). All values rounded to 2 decimal places. Noteworthy: \texttt  {Key} was excluded due to its lack of statistical significance ($p=0.94$).}}{8}{table.5}\protected@file@percent }
+\newlabel{tab:coeffs}{{5}{8}{Full WLS Regression Parameters ($R^2_{weighted} = 0.24$). All values rounded to 2 decimal places. Noteworthy: \texttt {Key} was excluded due to its lack of statistical significance ($p=0.94$)}{table.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {B}Additional Experimental Data}{8}{appendix.B}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.1}OLS Regression Results (Baseline)}{8}{subsection.B.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Baseline OLS (MLR) Coefficients. Comparing these with WLS results (Table \ref {tab:coeffs}) reveals how weighting corrects for heteroscedasticity.}}{8}{table.6}\protected@file@percent }
+\newlabel{tab:mlr_coeffs}{{6}{8}{Baseline OLS (MLR) Coefficients. Comparing these with WLS results (Table \ref {tab:coeffs}) reveals how weighting corrects for heteroscedasticity}{table.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.2}Multicollinearity Diagnostics}{9}{subsection.B.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Variance Inflation Factors (VIF).}}{9}{table.7}\protected@file@percent }
+\newlabel{tab:vif}{{7}{9}{Variance Inflation Factors (VIF)}{table.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {C}Analysis Pipeline Walkthrough}{9}{appendix.C}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.1}Data Loading \& Preprocessing}{9}{subsection.C.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.2}Exploratory Data Analysis (EDA)}{9}{subsection.C.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.3}Regression Modeling Phases}{9}{subsection.C.3}\protected@file@percent }
 \bibcite{ay2021spotify}{{1}{}{{}}{{}}}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Full WLS Regression Parameters ($R^2_{weighted} = 0.24$). All values rounded to 2 decimal places. Noteworthy: \texttt  {Key} was excluded due to its lack of statistical significance ($p=0.94$).}}{9}{table.5}\protected@file@percent }
-\newlabel{tab:coeffs}{{5}{9}{Full WLS Regression Parameters ($R^2_{weighted} = 0.24$). All values rounded to 2 decimal places. Noteworthy: \texttt {Key} was excluded due to its lack of statistical significance ($p=0.94$)}{table.5}{}}
-\gdef \@abspage@last{9}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.4}Model Selection \& Validation}{10}{subsection.C.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.5}Final Evaluation}{10}{subsection.C.5}\protected@file@percent }
+\gdef \@abspage@last{10}

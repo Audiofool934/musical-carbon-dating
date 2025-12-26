@@ -114,7 +114,8 @@ p_corr <- ggplot(melted_cor, aes(Var1, Var2, fill = value)) +
     scale_fill_gradient2(low = "#2c6e7f", high = "#d97706", mid = "white", midpoint = 0, limit = c(-1, 1)) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    labs(title = "Feature Correlation Matrix")
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    labs(x = NULL, y = NULL)
 
 ggsave("output_r/figures/r_correlation_heatmap.png", p_corr, width = 10, height = 8)
 
@@ -148,7 +149,8 @@ cat(sprintf("Loudness Coef: %.4f (t = %.2f)\n", coef(slr_model)["loudness"], coe
 p_loudness <- ggplot(train_df, aes(x = year, y = loudness)) +
     geom_point(alpha = 0.05, color = "#2c6e7f", size = 0.5) +
     geom_smooth(method = "lm", color = "#d97706") +
-    labs(title = "Evolution of Loudness (1960-2020)", x = "Year", y = "Loudness (Standardized)") +
+    geom_smooth(method = "lm", color = "#d97706") +
+    labs(x = "Year", y = "Loudness (Standardized)") +
     theme_minimal()
 
 ggsave("output_r/figures/r_loudness_trend.png", p_loudness, width = 8, height = 6)
@@ -254,7 +256,9 @@ p_final <- ggplot(test_results, aes(x = predicted_year, y = year)) +
     scale_fill_gradientn(colors = c("#ffffff", "#4a8a9a", "#8b6b3e", "#d97706"), values = c(0, 0.3, 0.7, 1)) +
     geom_abline(intercept = 0, slope = 1, color = "#7c3e1d", linetype = "dashed") +
     coord_fixed(ratio = 1, xlim = c(1960, 2020), ylim = c(1960, 2020)) +
-    labs(title = "Model Performance (Independent R Preprocessing)", x = "Predicted Year", y = "Actual Year") +
+    geom_abline(intercept = 0, slope = 1, color = "#7c3e1d", linetype = "dashed") +
+    coord_fixed(ratio = 1, xlim = c(1960, 2020), ylim = c(1960, 2020)) +
+    labs(x = "Predicted Year", y = "Actual Year") +
     theme_minimal()
 
 ggsave("output_r/figures/r_wls_pred_vs_act_v1.png", p_final, width = 8, height = 7)
@@ -267,7 +271,9 @@ test_results$era <- cut(test_results$year, breaks = seq(1960, 2020, by = 10), in
 p_error_era <- ggplot(test_results, aes(x = era, y = abs(nostalgia_index), fill = era)) +
     geom_boxplot(alpha = 0.7, outlier.shape = NA) +
     scale_fill_brewer(palette = "Spectral") +
-    labs(title = "Prediction Error by Era (WLS)", x = "Musical Era", y = "Absolute Error (Years)") +
+    geom_boxplot(alpha = 0.7, outlier.shape = NA) +
+    scale_fill_brewer(palette = "Spectral") +
+    labs(x = "Musical Era", y = "Absolute Error (Years)") +
     ylim(0, 30) +
     theme_minimal() +
     theme(legend.position = "none")
@@ -277,20 +283,25 @@ ggsave("output_r/figures/r_error_by_era.png", p_error_era, width = 8, height = 6
 # Figure: Nostalgia Index Distribution
 p_nostalgia <- ggplot(test_results, aes(x = nostalgia_index)) +
     geom_histogram(binwidth = 1, fill = "#d97706", color = "white", alpha = 0.8) +
-    labs(title = "Distribution of Nostalgia Index", x = "Nostalgia Index (Abs Prediction Error)", y = "Count of Songs") +
+    labs(x = "Nostalgia Index (Abs Prediction Error)", y = "Count of Songs") +
     xlim(0, 40) +
     theme_minimal()
 
 ggsave("output_r/figures/r_nostalgia_distribution.png", p_nostalgia, width = 8, height = 6)
 
 # Figure: Feature Trends (Loudness + Acousticness + Energy)
-long_trends <- train_df %>%
+# Aggregate by year to avoid overplotting 200k+ points
+agg_trends <- train_df %>%
     dplyr::select(year, loudness, acousticness, energy) %>%
-    tidyr::pivot_longer(cols = c(loudness, acousticness, energy), names_to = "Feature", values_to = "Value")
+    tidyr::pivot_longer(cols = c(loudness, acousticness, energy), names_to = "Feature", values_to = "Value") %>%
+    dplyr::group_by(year, Feature) %>%
+    dplyr::summarise(Mean_Value = mean(Value, na.rm = TRUE), .groups = "drop")
 
-p_trends <- ggplot(long_trends, aes(x = year, y = Value, color = Feature)) +
-    geom_smooth(method = "loess", se = FALSE, linewidth = 1.2) +
-    labs(title = "Feature Trends Over Time (Smoothed)", x = "Year", y = "Standardized Value") +
+p_trends <- ggplot(agg_trends, aes(x = year, y = Mean_Value, color = Feature)) +
+    geom_point(alpha = 0.4, size = 1) +
+    geom_line(alpha = 0.3) +
+    geom_smooth(method = "loess", se = FALSE, linewidth = 1.5) +
+    labs(x = "Year", y = "Standardized Value (Yearly Mean)") +
     theme_minimal() +
     scale_color_manual(values = c("#2c6e7f", "#d97706", "#8b6b3e"))
 
@@ -307,8 +318,10 @@ long_features <- plot_sample %>%
 
 p_dist <- ggplot(long_features, aes(x = Value)) + 
     geom_histogram(bins = 30, fill = "#2c6e7f", color = "white", alpha = 0.7) +
+p_dist <- ggplot(long_features, aes(x = Value)) + 
+    geom_histogram(bins = 30, fill = "#2c6e7f", color = "white", alpha = 0.7) +
     facet_wrap(~Feature, scales = "free") +
-    labs(title = "Feature Distributions (Standardized - Sampled)") +
+    labs(x = NULL, y = NULL) +
     theme_minimal()
 
 ggsave("output_r/figures/r_feature_distributions.png", p_dist, width = 12, height = 10)
@@ -323,7 +336,10 @@ diag_df <- data.frame(Fitted = fitted(wls_model), Residuals = resid(wls_model)) 
 p_resid <- ggplot(diag_df, aes(x = Fitted, y = Residuals)) +
     geom_point(alpha = 0.2, color = "#2c6e7f") +
     geom_smooth(color = "#d97706") +
-    labs(title = "Residuals vs Fitted (WLS - Sampled)", x = "Fitted Values", y = "Residuals") +
+p_resid <- ggplot(diag_df, aes(x = Fitted, y = Residuals)) +
+    geom_point(alpha = 0.2, color = "#2c6e7f") +
+    geom_smooth(color = "#d97706") +
+    labs(x = "Fitted Values", y = "Residuals") +
     theme_minimal()
 
 ggsave("output_r/figures/r_residuals_vs_fitted.png", p_resid, width = 8, height = 6)
@@ -333,7 +349,7 @@ cat("Saved r_residuals_vs_fitted.png\n")
 cat("Generating Lasso CV...\n")
 png("output_r/figures/r_lasso_cv.png", width = 800, height = 600)
 plot(lasso_cv)
-title("LASSO Cross-Validation", line = 2.5)
+# title("LASSO Cross-Validation", line = 2.5) # Removed for report
 dev.off()
 cat("Saved r_lasso_cv.png\n")
 
@@ -342,7 +358,10 @@ cat("Generating Model Comparison...\n")
 p_models <- ggplot(model_metrics, aes(x = reorder(Model, RMSE), y = RMSE, fill = Model)) +
     geom_bar(stat = "identity", alpha = 0.8) +
     coord_flip() +
-    labs(title = "Model Comparison (RMSE)", x = "Model", y = "RMSE (Years)") +
+p_models <- ggplot(model_metrics, aes(x = reorder(Model, RMSE), y = RMSE, fill = Model)) +
+    geom_bar(stat = "identity", alpha = 0.8) +
+    coord_flip() +
+    labs(x = "Model", y = "RMSE (Years)") +
     theme_minimal() +
     theme(legend.position = "none")
 
@@ -368,7 +387,12 @@ p_coef <- ggplot(coef_plot_df, aes(x = reorder(Feature, Coefficient), y = Coeffi
     geom_errorbar(aes(ymin = Lower, ymax = Upper), width = 0.2, color = "#2c6e7f") +
     coord_flip() +
     geom_hline(yintercept = 0, linetype = "dashed") +
-    labs(title = "WLS Coefficients (95% CI)", x = "Feature", y = "Standardized Effect on Year") +
+p_coef <- ggplot(coef_plot_df, aes(x = reorder(Feature, Coefficient), y = Coefficient)) +
+    geom_point(size = 3, color = "#d97706") +
+    geom_errorbar(aes(ymin = Lower, ymax = Upper), width = 0.2, color = "#2c6e7f") +
+    coord_flip() +
+    geom_hline(yintercept = 0, linetype = "dashed") +
+    labs(x = "Feature", y = "Standardized Effect on Year") +
     theme_minimal()
 
 ggsave("output_r/figures/r_coefficients_ci.png", p_coef, width = 8, height = 8)

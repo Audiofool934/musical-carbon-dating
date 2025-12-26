@@ -1,4 +1,6 @@
+% !TEX program = xelatex
 \documentclass[11pt, a4paper]{article}
+\usepackage[UTF8, scheme=plain]{ctex}
 \usepackage[utf8]{inputenc}
 \usepackage{geometry}
 \usepackage{graphicx}
@@ -14,7 +16,7 @@
 \graphicspath{{../output_r/figures/}}
 
 \title{\textbf{Musical Carbon Dating}\\ \large A Statistical Feature Recognition Approach to Dating Audio (1960-2020)}
-\author{Group Project (R Reproduction)}
+\author{敖婧妍，李赫轩，田润泽，王胤博，肖俊佳}
 \date{\today}
 
 \begin{document}
@@ -40,7 +42,7 @@ We analyzed the \textit{Spotify 600k Tracks Dataset} \citep{ay2021spotify}, appl
     \item \textbf{Standardization}: Comparison between features with different scales (e.g., $\text{Loudness}$ in dB vs. $\text{Valence}$ in $[0,1]$) can be biased. We applied \textbf{Z-Score Standardization} to all predictors ($x' = \frac{x - \mu}{\sigma}$).
 \end{itemize}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.65\textwidth]{r_correlation_heatmap.png}
     \caption{Correlation Heatmap of Audio Features. Note the moderate positive correlation between Energy and Loudness.}
@@ -77,13 +79,13 @@ The filtered dataset represents a broad spectrum of musical characteristics. Tab
 
 A closer inspection of these statistics reveals several key insights into the dataset's structure. First, the high standard deviation of $\text{Acousticness}$ ($\sigma \approx 0.30$) relative to its mean indicates a bimodal distribution, reflecting the sharp divide between organic, pre-digital recordings and modern synthesized productions. Second, $\text{Loudness}$ exhibits a wide dynamic range, underscoring the massive shift in mastering practices over the decades. Finally, the dominance of Major keys ($\text{Mode mean} \approx 0.67$) aligns with Western pop music conventions.
 
-\begin{figure}[H]
-    \centering
-    %\includegraphics[width=0.75\textwidth]{r_feature_distributions.png}
-    % \caption{Feature Distributions (Standardized). Note the varying skewness and multimodality across features.}
-    \caption{Distribution of Audio Features across the filtered dataset (Standardized).}
-    \label{fig:distributions}
-\end{figure}
+% \begin{figure}[htbp]
+%     \centering
+%     \includegraphics[width=0.75\textwidth]{r_feature_distributions.png}
+%     \caption{Feature Distributions (Standardized). Note the varying skewness and multimodality across features.}
+%     \caption{Distribution of Audio Features across the filtered dataset (Standardized).}
+%     \label{fig:distributions}
+% \end{figure}
 
 \section{Regression Analysis}
 
@@ -94,7 +96,7 @@ We first examined the relationship between $Year$ and $\text{Loudness}$ via a ba
     \label{eq:slr}
 \end{equation}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.7\textwidth]{r_feature_trends.png}
     \caption{Evolution of Audio Features (1960--2020). These trends illustrate the "Arrow of Time" in music production, with Loudness showing a consistent increase (the "Loudness War") while other features like Acousticness and Valence exhibit significant historical shifts.}
@@ -136,19 +138,19 @@ The distribution of residuals against fitted values provides insight into the mo
 
 We interpret the spread and occasional "boundedness" (due to the 1960-2020 timeframe) not as model failure, but as \textbf{Stylistic Heterogeneity}---the existence of "retro" and "futuristic" tracks that naturally defy their era's trends.
 
-\begin{figure}[H]
-    \centering
-    %\includegraphics[width=0.6\textwidth]{r_residuals_vs_fitted.png}
-    % \caption{Residuals vs Fitted. The funnel shape indicates heteroscedasticity, confirming the need for WLS.}
-    \caption{Residuals vs Fitted plot. The plot shows the distribution of prediction errors across the range of fitted years, revealing the inherent variance in musical styles.}
-    \label{fig:residuals}
-\end{figure}
+% \begin{figure}[htbp]
+%     \centering
+%     \includegraphics[width=0.6\textwidth]{r_residuals_vs_fitted.png}
+%     \caption{Residuals vs Fitted. The funnel shape indicates heteroscedasticity, confirming the need for WLS.}
+%     \caption{Residuals vs Fitted plot. The plot shows the distribution of prediction errors across the range of fitted years, revealing the inherent variance in musical styles.}
+%     \label{fig:residuals}
+% \end{figure}
 % We interpret the spread and occasional "boundedness" (due to the 1960-2020 timeframe) not as model failure, but as \textbf{Stylistic Heterogeneity}---the existence of "retro" and "futuristic" tracks that naturally defy their era's trends.
 
 \subsubsection{C. Heteroscedasticity}
 The most critical violation was \textbf{Heteroscedasticity} (non-constant variance). The BP test returned a significant $\chi^2 \approx \mathbf{20,754}$ ($p < 0.001$), confirming that the error variance is not constant.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.6\textwidth]{r_error_by_era.png}
     \caption{Prediction Error by Era. Variance expands significantly in later decades, suggesting "Stylistic Entropy" where modern music encompasses a wider, more chaotic range of production styles than the 1960s.}
@@ -166,7 +168,7 @@ To correct for heteroscedasticity, we implemented \textbf{Weighted Least Squares
     \item \textbf{Decade-Specific Precision}: It accounts for the varying "noise" levels (stylistic entropy) across different musical eras, ensuring that more consistent production periods carry appropriate weight in the global estimation.
 \end{itemize}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.7\textwidth]{r_wls_pred_vs_act_v1.png}
     \caption{Model Performance (Test Set). The diagonal concentration demonstrates the model's ability to recognize eras, though significant vertical spread remains due to stylistic cross-pollination.}
@@ -197,7 +199,7 @@ We performed a bidirectional stepwise selection based on the Akaike Information 
 \subsubsection{B. LASSO Regularization}
 We further applied LASSO ($L_1$ penalty) to penalize complexity and handle potential multicollinearity. Cross-validation was used to determine the optimal shrinkage parameter ($\lambda$).
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \begin{minipage}{0.48\textwidth}
         \centering
@@ -215,13 +217,13 @@ We further applied LASSO ($L_1$ penalty) to penalize complexity and handle poten
 
 % As shown in Figure \ref{fig:model_selection}, the predictive accuracy (RMSE) is remarkably consistent across the Full MLR, Stepwise, and LASSO models. The LASSO regularization yields a sparse solution that effectively \textbf{corroborates} the earlier AIC-based decision to exclude \texttt{Key}. Since shrinkage did not zero out other significant coefficients and yielded no discernible predictive gains, we proceeded with the AIC-optimized feature set. This confirms that our selected features represent the core "acoustic signature" of their respective eras, independent of specific regularization choices.
 
-\begin{figure}[H]
-    \centering
-    %\includegraphics[width=0.6\textwidth]{r_coefficients_ci.png}
-    % \caption{WLS Coefficients (95\% CI). Loudness and Danceability show strong positive effects, while Duration and Valence are negative.}
-    \caption{WLS Coefficients with 95\% Confidence Intervals. The Intercept represents the average year relative to the production era, while slopes quantify the "Arrow of Time".}
-    \label{fig:coef}
-\end{figure}
+% \begin{figure}[htbp]
+%     \centering
+%     \includegraphics[width=0.6\textwidth]{r_coefficients_ci.png}
+%     \caption{WLS Coefficients (95\% CI). Loudness and Danceability show strong positive effects, while Duration and Valence are negative.}
+%     \caption{WLS Coefficients with 95\% Confidence Intervals. The Intercept represents the average year relative to the production era, while slopes quantify the "Arrow of Time".}
+%     \label{fig:coef}
+% \end{figure}
 
 As shown in Figure \ref{fig:model_selection}, the predictive accuracy (RMSE) is remarkably consistent across the Full MLR, Stepwise, and LASSO models. The LASSO regularization yields a sparse solution that effectively \textbf{corroborates} the earlier AIC-based decision to exclude \texttt{Key}. Since shrinkage did not zero out other significant coefficients and yielded no discernible predictive gains, we proceeded with the AIC-optimized feature set. This confirms that our selected features represent the core "acoustic signature" of their respective eras, independent of specific regularization choices.
 
@@ -261,7 +263,7 @@ We define the \textbf{Nostalgia Index} as the magnitude of prediction error $| \
 \end{table}
 
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.7\textwidth]{r_nostalgia_distribution.png}
     \caption{Distribution of the Nostalgia Index. The heavy tail represents tracks with extreme stylistic displacement.}
@@ -317,6 +319,109 @@ The final model was estimated using Weighted Least Squares (WLS) to ensure heter
     \caption{Full WLS Regression Parameters ($R^2_{weighted} = 0.24$). All values rounded to 2 decimal places. Noteworthy: \texttt{Key} was excluded due to its lack of statistical significance ($p=0.94$).}
     \label{tab:coeffs}
 \end{table}
+
+\section{Additional Experimental Data}
+
+\subsection{OLS Regression Results (Baseline)}
+Table \ref{tab:mlr_coeffs} displays the coefficients from the initial Ordinary Least Squares (MLR) model, prior to WLS refinement.
+
+\begin{table}[htbp]
+    \centering
+    \small
+    \begin{tabular}{lcccc}
+        \toprule
+        \textbf{Predictor} & \textbf{Est.} & \textbf{SE} & \textbf{t} & \textbf{p} \\
+        \midrule
+        Intercept & 2001.14 & 0.03 & 72034.08 & $<0.001$ \\
+        Loudness & 6.56 & 0.05 & 141.78 & $<0.001$ \\
+        Tempo & 0.70 & 0.03 & 24.19 & $<0.001$ \\
+        Duration & -0.76 & 0.03 & -26.02 & $<0.001$ \\
+        Mode & -0.86 & 0.03 & -30.53 & $<0.001$ \\
+        Time Sig & -0.07 & 0.03 & -2.26 & $0.024$ \\
+        Acousticness & 0.45 & 0.04 & 11.84 & $<0.001$ \\
+        Danceability & 4.11 & 0.04 & 116.35 & $<0.001$ \\
+        Energy & -0.88 & 0.05 & -16.29 & $<0.001$ \\
+        Instrumentalness & 0.51 & 0.03 & 16.34 & $<0.001$ \\
+        Liveness & -0.32 & 0.03 & -10.96 & $<0.001$ \\
+        Speechiness & -0.25 & 0.03 & -8.16 & $<0.001$ \\
+        Valence & -4.48 & 0.04 & -125.34 & $<0.001$ \\
+        \bottomrule
+    \end{tabular}
+    \caption{Baseline OLS (MLR) Coefficients. Comparing these with WLS results (Table \ref{tab:coeffs}) reveals how weighting corrects for heteroscedasticity.}
+    \label{tab:mlr_coeffs}
+\end{table}
+
+\subsection{Multicollinearity Diagnostics}
+Variance Inflation Factors (VIF) were computed to assess multicollinearity (Table \ref{tab:vif}). All values are well below the threshold of 5 (or 10), indicating no severe multicollinearity.
+
+\begin{table}[htbp]
+    \centering
+    \small
+    \begin{tabular}{lc}
+        \toprule
+        \textbf{Feature} & \textbf{VIF} \\
+        \midrule
+        Loudness & 2.77 \\
+        Tempo & 1.09 \\
+        Duration & 1.11 \\
+        Mode & 1.02 \\
+        Time Signature & 1.07 \\
+        Acousticness & 1.90 \\
+        Danceability & 1.62 \\
+        Energy & 3.80 \\
+        Instrumentalness & 1.25 \\
+        Liveness & 1.12 \\
+        Speechiness & 1.24 \\
+        Valence & 1.66 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Variance Inflation Factors (VIF).}
+    \label{tab:vif}
+\end{table}
+
+\section{Analysis Pipeline Walkthrough}
+The R analysis script (\texttt{analysis.R}) implements a comprehensive six-stage pipeline relative to the project methodology.
+
+\subsection{Data Loading \& Preprocessing}
+The script begins by loading the raw dataset (\texttt{tracks.csv}) and applying critical filters:
+\begin{itemize}
+    \item \textbf{Temporal Filtering}: Restricting data to the 1960--2020 range to ensure cultural relevance.
+    \item \textbf{Popularity Threshold}: Excluding tracks with popularity $<30$ to remove outliers and noise.
+    \item \textbf{Feature Selection}: Retaining 12 core audio features. Notably, \textbf{Key} was excluded based on preliminary testing ($p=0.94$).
+    \item \textbf{Standardization}: Applying Z-score normalization ($x' = \frac{x - \mu}{\sigma}$) using parameters derived solely from the \textbf{training set} (80\%) to prevent data leakage into the test set (20\%).
+\end{itemize}
+
+\subsection{Exploratory Data Analysis (EDA)}
+Before modeling, the script generates a \textbf{Correlation Heatmap} to identify collinearity (e.g., Energy vs. Loudness) and histograms to assess feature distributions (often multimodal).
+
+\subsection{Regression Modeling Phases}
+The core analysis proceeds in iterative phases:
+\begin{enumerate}
+    \item \textbf{Phase I (SLR)}: A simple linear regression on \textbf{Loudness} establishes the baseline "Loudness War" trend ($R^2 \approx 0.14$).
+    \item \textbf{Phase II (MLR)}: A full multiple linear regression provides a baseline $R^2 \approx 0.25$.
+    \item \textbf{Phase III (Diagnostics)}:
+    \begin{itemize}
+        \item \textbf{Partial F-Test}: Confirmed significant non-linearity ($p < 0.001$), primarily in quadratic terms.
+        \item \textbf{Breusch-Pagan Test}: Identified severe heteroscedasticity ($\chi^2 \approx 20,754$), necessitating Robust Regression.
+    \end{itemize}
+    \item \textbf{Phase IV (WLS)}: The final model employs \textbf{Weighted Least Squares}, where weights are inversely proportional to the variance of residuals ($w_i = 1 / \sigma_i^2$), stabilizing the variance (Table \ref{tab:coeffs}).
+\end{enumerate}
+
+\subsection{Model Selection \& Validation}
+To verify the feature set, the script runs:
+\begin{itemize}
+    \item \textbf{Stepwise Regression}: Optimizing for AIC.
+    \item \textbf{LASSO (L1 Regularization)}: Using Cross-Validation to find $\lambda_{min}$.
+\end{itemize}
+The comparison (Figure \ref{fig:model_selection}) showed marginal gains, confirming the robustness of the MLR/WLS feature set.
+
+\subsection{Final Evaluation}
+The script concludes by applying the WLS model to the \textbf{Test Set}:
+\begin{itemize}
+    \item Computing \textbf{RMSE} (Root Mean Squared Error) and \textbf{MAE} (Mean Absolute Error).
+    \item Calculating the \textbf{Nostalgia Index} ($\Delta = |Year_{pred} - Year_{actual}|$).
+    \item Generating the final \textbf{Predicted vs. Actual} hexbin plot and \textbf{Error by Era} boxplot.
+\end{itemize}
 
 % Forest plot removed from appendix, moved to section 5.
 
