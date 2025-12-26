@@ -6,3 +6,5 @@ venv/
 data/*zip
 data/*csv
 data/*json
+r_submission/
+r_submission.zip

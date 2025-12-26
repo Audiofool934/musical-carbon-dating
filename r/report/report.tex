@@ -1,0 +1,329 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[numbers]{natbib}
+\usepackage{xcolor}
+
+\geometry{a4paper, margin=1in}
+\graphicspath{{../output_r/figures/}}
+
+\title{\textbf{Musical Carbon Dating}\\ \large A Statistical Feature Recognition Approach to Dating Audio (1960-2020)}
+\author{Group Project (R Reproduction)}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This project develops a statistical "carbon dating" model to predict the release year of musical tracks based solely on their audio features. Analyzing a dataset of over \textbf{250,000} songs from 1960 to 2020, we treat year prediction as a feature recognition task. We employ a rigorous regression pipeline including Simple Linear Regression, Multiple Linear Regression, and Weighted Least Squares (WLS) to address heteroscedasticity. Our best model (WLS) achieves a weighted $R^2=0.26$, capturing major historical trends. We report a robust \textbf{median absolute error of 7.52 years}, reflecting the model's central predictive accuracy, while the Mean Absolute Error (MAE) of 9.72 years highlights the influence of stylistic outliers (e.g., modern "retro" productions). Furthermore, we define a "Nostalgia Index" based on prediction residuals to quantify the "timelessness" or "retro" character of modern productions.
+\end{abstract}
+
+\section{Introduction}
+In archaeology, scientists use Carbon-14 isotopes to date organic matter. In this study, we ask: Can we carbon-date culture? specifically, can we determine the vintage of a musical recording purely from its acoustic properties?
+
+\subsection{Historical Context: The Arrow of Time}
+Music production has evolved significantly over the last six decades. The transition from analog tape and live studio recording in the 1960s to the digital revolution of the 1980s (MIDI, synthesizers) and the "in-the-box" production era of the 2000s has left distinct quantifiable markers in audio signal data. This study aims to quantify this evolution by building a regression model that maps audio features---such as loudness, acousticness, and valence---to a track's release year. This is treated as a feature recognition problem, where the model learns the "acoustic signature" of each era.
+
+\section{Data and Methods}
+We analyzed the \textit{Spotify 600k Tracks Dataset} \citep{ay2021spotify}, applying filtering to ensure data quality:
+\begin{itemize}
+    \item \textbf{Time Range}: 1960--2020.
+    \item \textbf{Popularity Filter}: $\text{Popularity} > 30$ to focus on culturally relevant music ($N = \mathbf{250,971}$ tracks).
+    \item \textbf{Validation Strategy}: We use a \textbf{Random Split} (80\% Training, 20\% Test).
+    \item \textbf{Standardization}: Comparison between features with different scales (e.g., $\text{Loudness}$ in dB vs. $\text{Valence}$ in $[0,1]$) can be biased. We applied \textbf{Z-Score Standardization} to all predictors ($x' = \frac{x - \mu}{\sigma}$).
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.65\textwidth]{r_correlation_heatmap.png}
+    \caption{Correlation Heatmap of Audio Features. Note the moderate positive correlation between Energy and Loudness.}
+    \label{fig:heatmap}
+\end{figure}
+
+\subsection{Data Characteristics}
+The filtered dataset represents a broad spectrum of musical characteristics. Table \ref{tab:descriptive} provides the summary statistics for the primary audio features used in our regression models.
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{lcccc}
+        \toprule
+        \textbf{Feature} & \textbf{Mean} & \textbf{Std. Dev} & \textbf{Min} & \textbf{Max} \\ 
+        \midrule
+        Loudness (dB) & -8.60 & 4.41 & -60.00 & 4.58 \\
+        Tempo (BPM) & 120.38 & 29.67 & 0.00 & 243.51 \\
+        Duration (min) & 3.91 & 1.62 & 0.25 & 90.06 \\
+        Mode (Major=1) & 0.65 & 0.48 & 0.00 & 1.00 \\
+        Time Signature & 3.91 & 0.41 & 0.00 & 5.00 \\
+        Acousticness & 0.33 & 0.30 & 0.00 & 1.00 \\
+        Danceability & 0.59 & 0.16 & 0.00 & 1.00 \\
+        Energy & 0.62 & 0.23 & 0.00 & 1.00 \\
+        Instrumentalness & 0.06 & 0.20 & 0.00 & 1.00 \\
+        Liveness & 0.21 & 0.18 & 0.00 & 1.00 \\
+        Speechiness & 0.10 & 0.16 & 0.00 & 1.00 \\
+        Valence & 0.55 & 0.25 & 0.00 & 1.00 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Descriptive Statistics of Audio Features (Raw Data - Reference). Note: Analysis proceeds with standardized features.}
+    \label{tab:descriptive}
+\end{table}
+
+A closer inspection of these statistics reveals several key insights into the dataset's structure. First, the high standard deviation of $\text{Acousticness}$ ($\sigma \approx 0.30$) relative to its mean indicates a bimodal distribution, reflecting the sharp divide between organic, pre-digital recordings and modern synthesized productions. Second, $\text{Loudness}$ exhibits a wide dynamic range, underscoring the massive shift in mastering practices over the decades. Finally, the dominance of Major keys ($\text{Mode mean} \approx 0.67$) aligns with Western pop music conventions.
+
+\begin{figure}[H]
+    \centering
+    %\includegraphics[width=0.75\textwidth]{r_feature_distributions.png}
+    % \caption{Feature Distributions (Standardized). Note the varying skewness and multimodality across features.}
+    \caption{Distribution of Audio Features across the filtered dataset (Standardized).}
+    \label{fig:distributions}
+\end{figure}
+
+\section{Regression Analysis}
+
+\subsection{Phase I: The "Loudness War" (Simple Linear Regression)}
+We first examined the relationship between $Year$ and $\text{Loudness}$ via a baseline SLR:
+\begin{equation}
+    Year_i = \beta_0 + \beta_1 Loudness_i + \varepsilon_i
+    \label{eq:slr}
+\end{equation}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{r_feature_trends.png}
+    \caption{Evolution of Audio Features (1960--2020). These trends illustrate the "Arrow of Time" in music production, with Loudness showing a consistent increase (the "Loudness War") while other features like Acousticness and Valence exhibit significant historical shifts.}
+    \label{fig:feature_trends}
+\end{figure}
+
+The baseline SLR achieved an $R^2$ of \textbf{0.14}, with \textbf{Loudness} alone predicting year with a coefficient of approximately $5.44$ years/dB (standardized). 
+
+\subsection{Phase II: Multiple Linear Regression (Baseline)}
+To broaden our predictive scope, we incorporated the full suite of acoustic features. The OLS baseline achieved an $R^2$ of \textbf{0.25} with an RMSE of approximately $12.49$ years. 
+While an improvement, the model still left 76\% of the variance unexplained, prompting a rigorous diagnostic audit.
+
+\subsection{Phase III: Diagnostic Audit}
+We performed a comprehensive check of the Gauss-Markov assumptions to identify sources of error.
+
+\subsubsection{A. Linearity \& Multicollinearity}
+\begin{itemize}
+    \item \textbf{Linearity}: A Partial F-Test ($F \approx 1773.22$) confirmed non-linear evolution in music production, justifying the need for flexible regression approaches.
+    \item \textbf{Multicollinearity}: Variance Inflation Factor (VIF) analysis (Table \ref{tab:vif}) showed all values remain well below the conservative threshold of 5.0. This confirms that despite artistic overlap, our features provide independent predictive signals.
+\end{itemize}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lc|lc}
+        \toprule
+        \textbf{Feature} & \textbf{VIF} & \textbf{Feature} & \textbf{VIF} \\ 
+        \midrule
+        Loudness & 2.65 & Danceability & 1.59 \\
+        Energy & 3.62 & Valence & 1.63 \\
+        Acousticness & 1.84 & Duration & 1.10 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Representative VIF Scores (Baseline MLR). Multicollinearity is not a threat to coefficient stability.}
+    \label{tab:vif}
+\end{table}
+
+\subsubsection{B. Residual Analysis}
+The distribution of residuals against fitted values provides insight into the model's error structure across the prediction range.
+
+We interpret the spread and occasional "boundedness" (due to the 1960-2020 timeframe) not as model failure, but as \textbf{Stylistic Heterogeneity}---the existence of "retro" and "futuristic" tracks that naturally defy their era's trends.
+
+\begin{figure}[H]
+    \centering
+    %\includegraphics[width=0.6\textwidth]{r_residuals_vs_fitted.png}
+    % \caption{Residuals vs Fitted. The funnel shape indicates heteroscedasticity, confirming the need for WLS.}
+    \caption{Residuals vs Fitted plot. The plot shows the distribution of prediction errors across the range of fitted years, revealing the inherent variance in musical styles.}
+    \label{fig:residuals}
+\end{figure}
+% We interpret the spread and occasional "boundedness" (due to the 1960-2020 timeframe) not as model failure, but as \textbf{Stylistic Heterogeneity}---the existence of "retro" and "futuristic" tracks that naturally defy their era's trends.
+
+\subsubsection{C. Heteroscedasticity}
+The most critical violation was \textbf{Heteroscedasticity} (non-constant variance). The BP test returned a significant $\chi^2 \approx \mathbf{20,754}$ ($p < 0.001$), confirming that the error variance is not constant.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{r_error_by_era.png}
+    \caption{Prediction Error by Era. Variance expands significantly in later decades, suggesting "Stylistic Entropy" where modern music encompasses a wider, more chaotic range of production styles than the 1960s.}
+    \label{fig:error_era}
+\end{figure}
+
+Variance is clearly time-dependent. We interpret this as \textbf{Stylistic Entropy}---the shift from the standardized studio sounds of the mid-20th century to the diversified, software-driven "anything goes" production of the 21st century.
+
+\subsection{Phase IV: Model Refinement (WLS)}
+To correct for heteroscedasticity, we implemented \textbf{Weighted Least Squares (WLS)}. Weights were inversely proportional to the variance of residuals ($w_i \propto 1/\sigma_i^2$).
+
+\textbf{Statistical Note}: While the Weighted $R^2$ (0.24) is numerically similar to the OLS $R^2$, it is important to note that they are calculated on different bases (weighted vs. unweighted residuals). This similarity, however, suggests that the model maintains its general explanatory power while the primary utility of WLS remains in:
+\begin{itemize}
+    \item \textbf{Inference Validity}: WLS provides the Best Linear Unbiased Estimates (BLUE) by mitigating the bias in standard error estimation caused by heteroscedasticity.
+    \item \textbf{Decade-Specific Precision}: It accounts for the varying "noise" levels (stylistic entropy) across different musical eras, ensuring that more consistent production periods carry appropriate weight in the global estimation.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{r_wls_pred_vs_act_v1.png}
+    \caption{Model Performance (Test Set). The diagonal concentration demonstrates the model's ability to recognize eras, though significant vertical spread remains due to stylistic cross-pollination.}
+    \label{fig:wls_fit}
+\end{figure}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lcccc}
+        \toprule
+        \textbf{Metric} & \textbf{SLR (Loudness)} & \textbf{MLR (Baseline)} & \textbf{WLS (Refined)} \\ 
+        \midrule
+        $R^2$ & 0.14 & 0.25 & 0.26 \\
+        RMSE (Years) & --- & 12.49 & 12.83 \\
+        MAE (Years) & --- & --- & 9.72 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Model Comparison. WLS improves inference validity without degrading predictive accuracy significantly.}
+    \label{tab:comparison}
+\end{table}
+
+\subsection{Phase V: Model Selection}
+To ensure the most parsimonious model, we compared several feature selection and regularization techniques. 
+
+\subsubsection{A. Stepwise Selection (AIC)}
+We performed a bidirectional stepwise selection based on the Akaike Information Criterion (AIC). The procedure successfully retained nearly all variables, suggesting that each audio feature contributes a non-redundant signal to the "carbon dating" process. The final AIC-optimized model identified \texttt{Key} as statistically insignificant ($p=0.94$), consistent with its lack of predictive power. Following the principle of \textbf{Parsimony}, we excluded \texttt{Key} from the final feature set to ensure a more concise and robust model.
+
+\subsubsection{B. LASSO Regularization}
+We further applied LASSO ($L_1$ penalty) to penalize complexity and handle potential multicollinearity. Cross-validation was used to determine the optimal shrinkage parameter ($\lambda$).
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{r_lasso_cv.png}
+        \caption{LASSO Cross-Validation Plot. The MSE remains relatively flat, confirming that most predictors are informative.}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{r_model_selection_comparison.png}
+        \caption{Comparison of Test RMSE across different selection methods.}
+    \end{minipage}
+    \label{fig:model_selection}
+\end{figure}
+
+% As shown in Figure \ref{fig:model_selection}, the predictive accuracy (RMSE) is remarkably consistent across the Full MLR, Stepwise, and LASSO models. The LASSO regularization yields a sparse solution that effectively \textbf{corroborates} the earlier AIC-based decision to exclude \texttt{Key}. Since shrinkage did not zero out other significant coefficients and yielded no discernible predictive gains, we proceeded with the AIC-optimized feature set. This confirms that our selected features represent the core "acoustic signature" of their respective eras, independent of specific regularization choices.
+
+\begin{figure}[H]
+    \centering
+    %\includegraphics[width=0.6\textwidth]{r_coefficients_ci.png}
+    % \caption{WLS Coefficients (95\% CI). Loudness and Danceability show strong positive effects, while Duration and Valence are negative.}
+    \caption{WLS Coefficients with 95\% Confidence Intervals. The Intercept represents the average year relative to the production era, while slopes quantify the "Arrow of Time".}
+    \label{fig:coef}
+\end{figure}
+
+As shown in Figure \ref{fig:model_selection}, the predictive accuracy (RMSE) is remarkably consistent across the Full MLR, Stepwise, and LASSO models. The LASSO regularization yields a sparse solution that effectively \textbf{corroborates} the earlier AIC-based decision to exclude \texttt{Key}. Since shrinkage did not zero out other significant coefficients and yielded no discernible predictive gains, we proceeded with the AIC-optimized feature set. This confirms that our selected features represent the core "acoustic signature" of their respective eras, independent of specific regularization choices.
+
+\section{Discussion: Musicological Discovery}
+The WLS model provides \textbf{valid statistical inference}, allowing us to go beyond prediction and into discovery.
+
+\subsection{The Loudness-Energy Paradox}
+Modern music is technically "louder", yet the coefficient for $\text{Energy}$ ($\beta \approx -2.06$) is negative. This is the statistical fingerprint of \textbf{dynamic range compression}.
+
+\subsection{The Sad Banger Hypothesis}
+We observe a significant decline in $\text{Valence}$ ($\beta \approx -2.98$) alongside a rise in $\text{Danceability}$ ($\beta \approx +3.23$). This "Sad Banger" phenomenon suggests a cultural shift towards introspective, minor-key electronic dance music in the 21st century.
+
+\subsection{The Attention Economy and Omitted Variable Bias}
+The model reveals a negative coefficient for $\text{Duration}$ ($\beta \approx -0.50$). This suggests tracks are getting shorter to optimize for streaming "skip rates".
+
+\subsection{The Acousticness Paradox}
+While simple correlation between $\text{Acousticness}$ and $Year$ is negative, the \textbf{Partial Regression Coefficient} in our WLS model is \textbf{positive} ($\beta \approx +0.65$). This implies that \textit{ceteris paribus} (holding loudness and energy constant), modern music actually retains significant acoustic texturing.
+
+\section{Applications: The Nostalgia Index}
+We define the \textbf{Nostalgia Index} as the magnitude of prediction error $| \hat{y}_{pred} - y_{actual} |$. This metric allows us to quantify how "retro" or "futuristic" a song sounds relative to its era.
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{llccc}
+        \toprule
+        \textbf{Song} & \textbf{Artist} & \textbf{Actual} & \textbf{Predicted} & \textbf{Index ($\Delta$)} \\ 
+        \midrule
+        Uptown Funk & Mark Ronson & 2015 & 2013.1 & 1.9 \\
+        Physical & Dua Lipa & 2020 & 2009.0 & 11.0 (\textbf{Retro}) \\
+        Blinding Lights & The Weeknd & 2019 & 2004.2 & 14.8 (\textbf{80s Revival}) \\
+        Retrograde & James Blake & 2013 & 2016.4 & 3.4 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Illustrative examples of the Nostalgia Index on culturally significant tracks.}
+    \label{tab:retro}
+\end{table}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{r_nostalgia_distribution.png}
+    \caption{Distribution of the Nostalgia Index. The heavy tail represents tracks with extreme stylistic displacement.}
+    \label{fig:nostalgia_dist}
+\end{figure}
+
+% \begin{table}[H]
+%     \centering
+%     \small
+%     \begin{tabular}{llccc}
+%         \toprule
+%         \textbf{Song} & \textbf{Artist} & \textbf{Actual} & \textbf{Predicted} & \textbf{Index ($\Delta$)} \\ 
+%         \midrule
+%         Uptown Funk & Mark Ronson & 2015 & 2013.1 & 1.9 \\
+%         Physical & Dua Lipa & 2020 & 2009.0 & 11.0 (\textbf{Retro}) \\
+%         Blinding Lights & The Weeknd & 2019 & 2004.2 & 14.8 (\textbf{80s Revival}) \\
+%         Retrograde & James Blake & 2013 & 2016.4 & 3.4 \\
+%         \bottomrule
+%     \end{tabular}
+%     \caption{Illustrative examples of the Nostalgia Index on culturally significant tracks.}
+%     \label{tab:retro}
+% \end{table}
+
+\section{Conclusion}
+This study demonstrates that Regression Analysis is a powerful tool for quantifying cultural evolution. Our final WLS model confirms that we can date musical tracks with a \textbf{median absolute error of 7.5 years}. While the $R^2$ of 0.26 indicates that much of musical creativity remains statistically unique, the highly significant coefficients for features like \textbf{Danceability} ($\beta \approx 3.60$), \textbf{Loudness} ($\beta \approx 7.57$), and \textbf{Valence} ($\beta \approx -3.39$) provide clear evidence of a quantifiable evolution in sound. Ultimately, the model provides a novel aesthetic metric via the Nostalgia Index.
+
+\appendix
+\section{Technical Regression Results}
+The final model was estimated using Weighted Least Squares (WLS) to ensure heteroscedasticity-consistent inference. Table \ref{tab:coeffs} presents the detailed statistical parameters for each predictor.
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{lcccc}
+        \toprule
+        \textbf{Predictor} & \textbf{Coefficient ($\beta$)} & \textbf{Std. Error} & \textbf{t-statistic} & \textbf{p-value} \\ 
+        \midrule
+        Intercept & 2003.77 & 0.03 & 78700.52 & $< 0.001$ \\ 
+        Loudness & 7.57 & 0.04 & 169.90 & $< 0.001$ \\ 
+        Tempo & 0.81 & 0.03 & 32.03 & $< 0.001$ \\ 
+        Duration (scaled) & -0.33 & 0.02 & -19.90 & $< 0.001$ \\ 
+        Mode & -0.72 & 0.02 & -30.90 & $< 0.001$ \\ 
+        Time Signature & 0.07 & 0.03 & 2.45 & $< 0.001$ \\ 
+        Acousticness & 0.65 & 0.03 & 19.26 & $< 0.001$ \\ 
+        Danceability & 3.60 & 0.03 & 119.39 & $< 0.001$ \\ 
+        Energy & -2.05 & 0.05 & -43.64 & $< 0.001$ \\ 
+        Instrumentalness & 0.20 & 0.03 & 6.39 & $< 0.001$ \\ 
+        Liveness & -0.23 & 0.02 & -9.44 & $< 0.001$ \\ 
+        Speechiness & 0.12 & 0.03 & 4.05 & $< 0.001$ \\ 
+        Valence & -3.39 & 0.03 & -114.51 & $< 0.001$ \\ 
+        \bottomrule
+    \end{tabular}
+    \caption{Full WLS Regression Parameters ($R^2_{weighted} = 0.24$). All values rounded to 2 decimal places. Noteworthy: \texttt{Key} was excluded due to its lack of statistical significance ($p=0.94$).}
+    \label{tab:coeffs}
+\end{table}
+
+% Forest plot removed from appendix, moved to section 5.
+
+
+\begin{thebibliography}{9}
+\bibitem{ay2021spotify}
+Yamac Eren Ay. (2021). \textit{Spotify Dataset 1921-2020, 600k+ Tracks}. Kaggle. \url{https://www.kaggle.com/datasets/yamaerenay/spotify-dataset-1921-2020-600k-tracks}
+\end{thebibliography}
+
+\end{document}

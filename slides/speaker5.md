@@ -20,9 +20,9 @@ If our model predicts a 2020 song was made in 1980, is the model wrong? Or is th
 
 We define the **Nostalgia Index** as: $| \text{Predicted Year} - \text{Actual Year} |$.
 Our stats show:
-- **Mean Index**: 9.31 years.
-- **Median**: 7.58 years.
-- **Max**: 82.88 years (extreme retro outliers).
+- **Mean Index**: 9.30 years.
+- **Median**: 7.37 years.
+- **Max**: 106.01 years (extreme retro outliers).
 
 A high index identifies a song that is 'Time-Displaced'."
 

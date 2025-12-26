@@ -1,0 +1,285 @@
+DEBUG: Saving figures to: /Users/audiofool/Projects/musical-carbon-dating/output/figures
+================================================================================
+Musical Carbon Dating: Two-Stage Analysis
+Stage 1: Year Prediction (Regression Modeling)
+Stage 2: Nostalgia Index (Model Application)
+================================================================================
+
+================================================================================
+PART 1: DATA PREPARATION
+================================================================================
+Loading data from /Users/audiofool/Projects/musical-carbon-dating/data/tracks.csv...
+Data cleaning: 586672 -> 212050 tracks selected.
+Random split (legacy mode)
+Train set size: 169640
+Test set size: 42410
+Train year range: 1960 - 2020
+Test year range: 1960 - 2020
+
+================================================================================
+PART 2: EXPLORATORY DATA ANALYSIS
+================================================================================
+--- Starting Comprehensive EDA ---
+Generating Feature Distributions...
+Saved plot to /Users/audiofool/Projects/musical-carbon-dating/output/figures/eda_distributions.png
+Generating Correlation Heatmap...
+Saved plot to /Users/audiofool/Projects/musical-carbon-dating/output/figures/eda_correlation_heatmap.png
+Generating Time Series Trends...
+Saved plot to /Users/audiofool/Projects/musical-carbon-dating/output/figures/eda_trends_over_time.png
+
+>>> Applying Standardization (Z-Score Normalization) to Features...
+[OK] Features scaled successfully. Means are ~0, Stds are ~1.
+
+================================================================================
+PHASE I: SIMPLE LINEAR REGRESSION
+================================================================================
+
+--- Phase II: Simple Linear Regression (Feature: loudness) ---
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:                   year   R-squared:                       0.130
+Model:                            OLS   Adj. R-squared:                  0.130
+Method:                 Least Squares   F-statistic:                 2.540e+04
+Date:                Fri, 26 Dec 2025   Prob (F-statistic):               0.00
+Time:                        01:02:23   Log-Likelihood:            -6.7412e+05
+No. Observations:              169640   AIC:                         1.348e+06
+Df Residuals:                  169638   BIC:                         1.348e+06
+Df Model:                           1                                         
+Covariance Type:            nonrobust                                         
+==============================================================================
+                 coef    std err          t      P>|t|      [0.025      0.975]
+------------------------------------------------------------------------------
+const       2002.9358      0.031   6.41e+04      0.000    2002.875    2002.997
+loudness       4.9804      0.031    159.382      0.000       4.919       5.042
+==============================================================================
+Omnibus:                    10883.837   Durbin-Watson:                   2.007
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):            13162.880
+Skew:                          -0.651   Prob(JB):                         0.00
+Kurtosis:                       3.409   Cond. No.                         1.00
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+================================================================================
+PHASE II: MULTIPLE LINEAR REGRESSION (Baseline)
+================================================================================
+
+--- Phase III: Multiple Linear Regression (Full Model) ---
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:                   year   R-squared:                       0.238
+Model:                            OLS   Adj. R-squared:                  0.238
+Method:                 Least Squares   F-statistic:                     4084.
+Date:                Fri, 26 Dec 2025   Prob (F-statistic):               0.00
+Time:                        01:02:23   Log-Likelihood:            -6.6286e+05
+No. Observations:              169640   AIC:                         1.326e+06
+Df Residuals:                  169626   BIC:                         1.326e+06
+Df Model:                          13                                         
+Covariance Type:            nonrobust                                         
+====================================================================================
+                       coef    std err          t      P>|t|      [0.025      0.975]
+------------------------------------------------------------------------------------
+const             2002.9358      0.029   6.85e+04      0.000    2002.878    2002.993
+loudness             6.2327      0.048    130.871      0.000       6.139       6.326
+tempo                0.6590      0.030     21.655      0.000       0.599       0.719
+duration_ms         -0.8145      0.031    -26.619      0.000      -0.875      -0.755
+key                  0.0260      0.030      0.880      0.379      -0.032       0.084
+mode                -0.8485      0.030    -28.511      0.000      -0.907      -0.790
+time_signature      -0.0572      0.030     -1.891      0.059      -0.116       0.002
+acousticness         0.5771      0.040     14.542      0.000       0.499       0.655
+danceability         3.8891      0.037    105.345      0.000       3.817       3.961
+energy              -1.0149      0.056    -18.233      0.000      -1.124      -0.906
+instrumentalness     0.5846      0.033     17.971      0.000       0.521       0.648
+liveness            -0.4093      0.031    -13.280      0.000      -0.470      -0.349
+speechiness         -0.4640      0.032    -14.549      0.000      -0.527      -0.402
+valence             -4.1806      0.037   -112.009      0.000      -4.254      -4.107
+==============================================================================
+Omnibus:                    10849.901   Durbin-Watson:                   2.006
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):            14790.400
+Skew:                          -0.576   Prob(JB):                         0.00
+Kurtosis:                       3.875   Cond. No.                         4.12
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+MLR Test Set RMSE: 12.0458 years
+Generating Actual vs Predicted Plot: Baseline MLR Predictions...
+Saved plot to /Users/audiofool/Projects/musical-carbon-dating/output/figures/pred_vs_act_baseline_mlr_predictions.png
+Generating Partial Regression Plot: MLR Partial Regression...
+Saved plot to /Users/audiofool/Projects/musical-carbon-dating/output/figures/partial_regression_mlr_partial_regression.png
+
+================================================================================
+PHASE III: REGRESSION DIAGNOSTICS
+================================================================================
+
+>>> 3A. Heteroscedasticity Diagnosis & Remedy
+
+--- Phase IV: Heteroscedasticity Tests ---
+Breusch-Pagan Test: LM=19567.0117, p-value=0.0000
+Heteroscedasticity detected! Suggesting Box-Cox transformation.
+
+--- Phase IV: Weighted Least Squares (WLS - FGLS) ---
+                            WLS Regression Results                            
+==============================================================================
+Dep. Variable:                   year   R-squared:                       0.275
+Model:                            WLS   Adj. R-squared:                  0.275
+Method:                 Least Squares   F-statistic:                     4945.
+Date:                Fri, 26 Dec 2025   Prob (F-statistic):               0.00
+Time:                        01:02:30   Log-Likelihood:            -6.5159e+05
+No. Observations:              169640   AIC:                         1.303e+06
+Df Residuals:                  169626   BIC:                         1.303e+06
+Df Model:                          13                                         
+Covariance Type:            nonrobust                                         
+====================================================================================
+                       coef    std err          t      P>|t|      [0.025      0.975]
+------------------------------------------------------------------------------------
+const             2002.7567      0.029   6.96e+04      0.000    2002.700    2002.813
+loudness             8.1931      0.051    161.126      0.000       8.093       8.293
+tempo                0.9925      0.029     34.754      0.000       0.937       1.049
+duration_ms         -0.7473      0.026    -28.824      0.000      -0.798      -0.696
+key                  0.0263      0.026      1.001      0.317      -0.025       0.078
+mode                -0.7781      0.026    -29.812      0.000      -0.829      -0.727
+time_signature       0.2503      0.033      7.608      0.000       0.186       0.315
+acousticness         0.4088      0.037     10.973      0.000       0.336       0.482
+danceability         3.9512      0.034    117.913      0.000       3.885       4.017
+energy              -2.2431      0.052    -43.267      0.000      -2.345      -2.141
+instrumentalness    -0.1046      0.035     -3.017      0.003      -0.172      -0.037
+liveness            -0.2491      0.028     -8.880      0.000      -0.304      -0.194
+speechiness          0.0685      0.035      1.946      0.052      -0.001       0.138
+valence             -3.5962      0.033   -109.604      0.000      -3.661      -3.532
+==============================================================================
+Omnibus:                    16222.105   Durbin-Watson:                   2.007
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):            21762.044
+Skew:                          -0.802   Prob(JB):                         0.00
+Kurtosis:                       3.712   Cond. No.                         3.93
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+Generating Weighted Fit Plot: WLS Weighted Fit (Training)...
+Saved plot to /Users/audiofool/Projects/musical-carbon-dating/output/figures/weighted_fit_training.png
+
+>>> 3B. Normality Check & Box-Cox Transformation
+Generating Residual Plots: MLR Residuals...
+Saved plot to /Users/audiofool/Projects/musical-carbon-dating/output/figures/residuals_mlr_residuals.png
+Generating Scale-Location Plot: MLR Scale-Location...
+Note: Scale-Location plot sampled to 5000 points for performance.
+Saved plot to /Users/audiofool/Projects/musical-carbon-dating/output/figures/scale_location.png
+
+--- Phase IV: Box-Cox Transformation ---
+Best Lambda: 62.3795
+
+>>> 3C. Outliers & Influential Points
+Generating Influence Plot: MLR Influence...
+Note: Influence plot sampled to 5000 points for performance.
+Saved plot to /Users/audiofool/Projects/musical-carbon-dating/output/figures/influence_plot.png
+
+================================================================================
+PHASE IV: MULTICOLLINEARITY DIAGNOSIS & REMEDY
+================================================================================
+
+--- Phase IV: Checking Multicollinearity (VIF) ---
+             feature       VIF
+9             energy  3.623239
+1           loudness  2.652540
+7       acousticness  1.841756
+13           valence  1.629120
+8       danceability  1.593914
+10  instrumentalness  1.237429
+12       speechiness  1.189724
+11          liveness  1.110808
+3        duration_ms  1.095005
+2              tempo  1.083157
+6     time_signature  1.069049
+5               mode  1.035781
+4                key  1.020056
+0              const  1.000000
+
+--- Correlation Check: Loudness vs Energy ---
+Pearson r(Loudness, Energy) = 0.7316
+
+--- Phase III-B: Robustness Check (No Popularity) ---
+R-squared (no popularity): 0.2384
+Test Set RMSE (no popularity): 12.0458 years
+
+--- Phase IV: Ridge Regression (Alpha=1.0) ---
+Ridge Coefficients:
+loudness: 6.2326
+tempo: 0.6590
+duration_ms: -0.8145
+key: 0.0260
+mode: -0.8485
+time_signature: -0.0572
+acousticness: 0.5771
+danceability: 3.8891
+energy: -1.0148
+instrumentalness: 0.5845
+liveness: -0.4093
+speechiness: -0.4640
+valence: -4.1805
+
+================================================================================
+PHASE V: MODEL SELECTION
+================================================================================
+
+--- Phase V: Stepwise Selection (Forward) ---
+Stepwise Selected Features: ['loudness', 'valence', 'danceability', 'energy', 'mode', 'duration_ms', 'tempo', 'instrumentalness', 'speechiness', 'acousticness', 'liveness', 'time_signature']
+
+--- Phase V: Model Selection (Lasso, Alpha=0.01) ---
+Lasso Selected Features: ['loudness', 'tempo', 'duration_ms', 'key', 'mode', 'time_signature', 'acousticness', 'danceability', 'energy', 'instrumentalness', 'liveness', 'speechiness', 'valence']
+
+Feature Comparison:
+Stepwise (AIC) selected: 12 features
+LASSO selected: 13 features
+
+================================================================================
+PHASE VI: MODEL COMPARISON & FINAL EVALUATION
+================================================================================
+
+--- Model Comparison ---
+    Model          AIC          BIC       R²   Adj_R²  Test_RMSE
+ MLR_Full 1.325751e+06 1.325891e+06 0.238394 0.238336  12.045795
+MLR_NoPop 1.325751e+06 1.325891e+06 0.238394 0.238336  12.045795
+      WLS 1.303201e+06 1.303342e+06 0.274822 0.274766  12.270298
+
+[OK] Best Model Selected: WLS
+Generating Coefficient Plot: WLS Coefficients (95% CI)...
+Saved plot to /Users/audiofool/Projects/musical-carbon-dating/output/figures/coefficients_with_ci.png
+
+--- Phase VI: Final Model Evaluation ---
+Test Set RMSE: 12.2703
+Test Set MAE: 9.2989
+Generating Actual vs Predicted Plot: Best Model (WLS) Predictions...
+Saved plot to /Users/audiofool/Projects/musical-carbon-dating/output/figures/pred_vs_act_best_model_(wls)_predictions.png
+
+================================================================================
+STAGE 2: NOSTALGIA INDEX APPLICATION
+================================================================================
+
+Nostalgia Index Statistics:
+  Mean: 9.30 years
+  Median: 7.37 years
+  Std: 8.01 years
+  Max: 106.01 years
+Generating Nostalgia Index Distribution: Nostalgia Index Distribution...
+Saved plot to /Users/audiofool/Projects/musical-carbon-dating/output/figures/nostalgia_index_distribution.png
+Generating Error by Era Plot: Prediction Error by Era...
+Saved plot to /Users/audiofool/Projects/musical-carbon-dating/output/figures/error_by_era.png
+
+Highly Nostalgic Songs (Top 5%, Index ≥ 25.2 years):
+  Count: 2121
+
+[OK] Results saved to output/tables/predictions_with_nostalgia_index.csv
+
+================================================================================
+PIPELINE COMPLETE!
+================================================================================
+
+Summary:
+  - Best Model: WLS
+  - Test RMSE: 12.27 years
+  - Mean Nostalgia Index: 9.30 years
+  - All figures saved to output/figures/
+  - Predictions saved to output/tables/predictions_with_nostalgia_index.csv

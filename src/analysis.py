@@ -157,22 +157,42 @@ class RegressionAnalysis:
 
 
     def fit_wls(self, model):
-        """Phase IV: Weighted Least Squares (Alternative to Box-Cox)"""
-        print("\n--- Phase IV: Weighted Least Squares (WLS) ---")
-        # Estimate weights using residuals from OLS
-        residuals = model.resid
-        # Simple approach: weight = 1 / resid^2 (or variance of residuals group)
-        # More robust: use absolute residuals helpful for heteroscedasticity
-        weights = 1.0 / (residuals.abs() + 1e-6) # prevent div by zero
+        """Phase IV: Weighted Least Squares (WLS) using FGLS"""
+        print("\n--- Phase IV: Weighted Least Squares (WLS - FGLS) ---")
+        
+        # 1. Calculate squared residuals from OLS
+        resid_sq = model.resid ** 2
+        
+        # 2. Log-transformation to stabilize variance estimation
+        #    log(e^2) = X * gamma + error
+        #    Add small constant to avoid log(0)
+        log_resid_sq = np.log(resid_sq + 1e-6)
+        
+        # 3. Fit auxiliary model to predict variance
+        #    We use the same features as the main model
+        exog = model.model.exog
+        exog_names = model.model.exog_names
+        
+        # Create auxiliary model
+        aux_model = sm.OLS(log_resid_sq, exog).fit()
+        
+        # 4. Predict log-variance and convert back to weights
+        #    fitted_val = predicted log(sigma^2)
+        #    sigma^2 = exp(fitted_val)
+        #    weight = 1 / sigma^2
+        predicted_log_var = aux_model.fittedvalues
+        predicted_var = np.exp(predicted_log_var)
+        weights = 1.0 / predicted_var
+        
+        # Normalize weights (optional, keeps scale reasonable)
+        weights = weights / weights.mean()
         
         # Preserve the original exog with proper column names
-        exog_with_names = model.model.exog
-        # Create DataFrame with proper names to preserve them
         import pandas as pd
-        if not isinstance(exog_with_names, pd.DataFrame):
-            exog_df = pd.DataFrame(exog_with_names, columns=model.model.exog_names)
+        if not isinstance(exog, pd.DataFrame):
+            exog_df = pd.DataFrame(exog, columns=exog_names)
         else:
-            exog_df = exog_with_names.copy()
+            exog_df = exog.copy()
         
         # Reset index to ensure alignment
         exog_df.index = self.y_train.index

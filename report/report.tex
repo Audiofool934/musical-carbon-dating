@@ -23,7 +23,7 @@
 \maketitle
 
 \begin{abstract}
-This project develops a statistical "carbon dating" model to predict the release year of musical tracks based solely on their audio features. Analyzing a dataset of over 250,000 songs from 1960 to 2020, we treat year prediction as a feature recognition task. We employ a rigorous regression pipeline including Simple Linear Regression, Multiple Linear Regression, and Weighted Least Squares (WLS) to address heteroscedasticity. Our best model (WLS) achieves specific predictive power ($R^2=0.763$) with a mean absolute error (MAE) of approximately 9.31 years. Furthermore, we define a "Nostalgia Index" based on prediction residuals to quantify the "timelessness" or "retro" character of modern productions, validating this metric against known retro-style hits.
+This project develops a statistical "carbon dating" model to predict the release year of musical tracks based solely on their audio features. Analyzing a dataset of over 250,000 songs from 1960 to 2020, we treat year prediction as a feature recognition task. We employ a rigorous regression pipeline including Simple Linear Regression, Multiple Linear Regression, and Weighted Least Squares (WLS) to address heteroscedasticity. Our best model (WLS) achieves a statistically valid weighted $R^2=0.275$, reflecting the high variance of musical evolution, with a Mean Absolute Error (MAE) of approximately 9.30 years. Furthermore, we define a "Nostalgia Index" based on prediction residuals to quantify the "timelessness" or "retro" character of modern productions, validating this metric against known retro-style hits.
 \end{abstract}
 
 \section{Introduction}
@@ -81,7 +81,7 @@ To correct for heteroscedasticity, we implemented \textbf{Weighted Least Squares
 \begin{itemize}
     \item \textbf{Coefficient estimates} remain unbiased but become \textit{efficient}.
     \item \textbf{Standard errors} are now correct, making p-values and confidence intervals trustworthy.
-    \item The \textbf{Weighted $R^2 = 0.763$} measures how well the model captures core musical trends in the training data, not test-set predictive power.
+    \item The \textbf{Weighted $R^2 = 0.275$} measures how well the model captures core musical trends in the training data, correctly accounting for the high variance in specific eras.
 \end{itemize}
 
 \subsection{Phase V: Model Selection}
@@ -109,7 +109,7 @@ WLS provides \textbf{valid coefficient estimates}, allowing us to statistically 
 \end{itemize}
 
 \section{Applications: The Nostalgia Index}
-While the model captures musical evolution (Weighted $R^2 = 0.763$), practical prediction accuracy is characterized by \textbf{MAE $\approx$ 9.31 years} on the test set. Large prediction errors are often informative. We define the \textbf{Nostalgia Index} as:
+While the model captures musical evolution (Weighted $R^2 = 0.275$), practical prediction accuracy is characterized by \textbf{MAE $\approx$ 9.30 years} on the test set. Large prediction errors are often informative. We define the \textbf{Nostalgia Index} as:
 $$ \text{Nostalgia Index} = | \hat{y}_{pred} - y_{actual} | $$
 A high index indicates a song that sounds significantly "out of time".
 
